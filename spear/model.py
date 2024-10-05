@@ -2,13 +2,15 @@
 Main financial model class
 """
 import logging
-import matplotlib.pyplot as plt
-import numpy as np
 from dataclasses import dataclass
 from typing import List, Optional
-from .flows import InOrOutPerYear
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 from .assets import Asset
 from .events import Event
+from .flows import InOrOutPerYear
 
 
 @dataclass
@@ -40,13 +42,18 @@ class FinancialModel:
         self._verify_asset_allocation()
 
     def _verify_asset_allocation(self) -> None:
+        """
+        Raise an error if the total allocation is not 1, or the number of assets if
+        custom allocations are used.
+        """
         total_allocation = sum(asset.allocation or 0 for asset in self.assets)
-        # Check if allocations sum to 1 (valid custom allocations) or to the number of assets (default equal allocation)
         if not np.isclose(total_allocation, 1) and not np.isclose(
             total_allocation, len(self.assets)
         ):
             raise ValueError(
-                f"Total assets allocation is {total_allocation} but must sum to 1 (for custom allocations) or to the number of assets ({len(self.assets)}) (for default equal allocation)."
+                f"Total assets allocation is {total_allocation} but must sum to 1 "
+                "(for custom allocations) or to the number of assets "
+                f"({len(self.assets)}) (for default equal allocation)."
             )
 
     @property

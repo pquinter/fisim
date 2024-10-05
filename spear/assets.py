@@ -2,6 +2,7 @@
 Asset class for financial planning model
 """
 from typing import Optional
+
 from .flows import InOrOutPerYear
 
 

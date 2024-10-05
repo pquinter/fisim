@@ -2,6 +2,7 @@
 Event class for financial planning model
 """
 from typing import List
+
 from .flows import InOrOutPerYear
 
 
@@ -39,6 +40,3 @@ class Event:
         self.duration = duration
         self.affected_ios = affected_ios
         self.multiplier = multiplier
-
-    def __repr__(self):
-        return f"Event(start_year={self.start_year}, duration={self.duration}, affected_ios={self.affected_ios}, multiplier={self.multiplier})"

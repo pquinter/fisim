@@ -1,11 +1,12 @@
 """
 Base classes for financial planning model
 """
-import numpy as np
 import datetime
-import matplotlib.pyplot as plt
 from dataclasses import dataclass
 from typing import Optional
+
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 @dataclass
@@ -49,7 +50,10 @@ class InOrOutPerYear:
         """
         Return a string representation of the InOrOutPerYear object.
         """
-        return f"{self.name} (Start Year: {self.start_year}, Initial Value: {self.initial_value}, Duration: {self.duration})"
+        return (
+            f"{self.name} (Start Year: {self.start_year}, "
+            f"Initial Value: {self.initial_value}, Duration: {self.duration})"
+        )
 
     def _get_current_year(self) -> int:
         return datetime.datetime.now().year
