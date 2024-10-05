@@ -4,4 +4,10 @@ Spear is a Python library for financial planning and modeling. It provides tools
 
 ## Installation
 
-You can install Spear using pip:
+Clone the repository and install with pip:
+
+```bash
+git clone https://github.com/pquinter/financial-planning.git
+cd financial-planning
+pip install -e .
+```
