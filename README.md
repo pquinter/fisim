@@ -11,3 +11,7 @@ git clone https://github.com/pquinter/financial-planning.git
 cd financial-planning
 pip install -e .
 ```
+
+## Usage
+
+View a quick demo in this [Jupyter notebook](notebooks/explore-financial-planning.ipynb).
