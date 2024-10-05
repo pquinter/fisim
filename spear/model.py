@@ -43,18 +43,11 @@ class FinancialModel:
 
     def _verify_asset_allocation(self) -> None:
         """
-        Raise an error if the total allocation is not 1, or the number of assets if
-        custom allocations are used.
+        Raise an error if the total allocation is not 1.
         """
         total_allocation = sum(asset.allocation or 0 for asset in self.assets)
-        if not np.isclose(total_allocation, 1) and not np.isclose(
-            total_allocation, len(self.assets)
-        ):
-            raise ValueError(
-                f"Total assets allocation is {total_allocation} but must sum to 1 "
-                "(for custom allocations) or to the number of assets "
-                f"({len(self.assets)}) (for default equal allocation)."
-            )
+        if not np.isclose(total_allocation, 1):
+            raise ValueError(f"Total assets allocation is {total_allocation} but must sum to 1.")
 
     @property
     def start_year(self) -> int:
