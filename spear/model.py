@@ -25,7 +25,7 @@ class FinancialModel:
     duration: int
 
     events: Optional[List[Event]] = None
-    debt: Optional[InOrOutPerYear] = None
+    debt: Optional[InOrOutPerYear] = None  # type: ignore
     stocks_allocation: float = 0.7
     bonds_allocation: float = 0.3
     cash_buffer: int = 50_000
@@ -65,6 +65,9 @@ class FinancialModel:
         return min(money.start_year for money in all_moneys)
 
     def _enable_logging(self):
+        """
+        Turn on logging. Once enabled, add messages with self._log().
+        """
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
 
@@ -77,7 +80,10 @@ class FinancialModel:
 
         self.logger.info(f"FinancialModel initialized. Start year: {self.start_year}")
 
-    def _log(self, level, message):
+    def _log(self, level: str, message: str) -> None:
+        """
+        Log a message.
+        """
         if self.logger:
             getattr(self.logger, level)(message)
 
@@ -115,7 +121,7 @@ class FinancialModel:
 
     def _invest(self, year: int, amount: int) -> None:
         """
-        Invest surplus cash into assets according to allocation.
+        Invest amount into assets with cap, then according to allocation.
         """
         # First, allocate to assets with cap
         capped_assets = [asset for asset in self.assets if asset.cap_value != float("inf")]
@@ -173,7 +179,7 @@ class FinancialModel:
 
     def _plot_values(self, values: List[InOrOutPerYear], ax: Optional[plt.Axes] = None) -> plt.Axes:
         """
-        Plot values from InOrOutPerYears over financial planning duration.
+        Plot values from InOrOutPerYears or its subclasses over financial planning duration.
         """
         ax = ax or plt.gca()
         for value in values:
@@ -190,7 +196,7 @@ class FinancialModel:
         """
         Plot the expenses, revenues and debt over financial planning duration.
         """
-        return self._plot_values(self.expenses + self.revenues + [self.debt], ax)
+        return self._plot_values(self.expenses + self.revenues + [self.debt], ax)  # type: ignore
 
     def plot_all(self, ax: Optional[plt.Axes] = None) -> plt.Axes:
         """
