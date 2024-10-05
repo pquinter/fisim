@@ -1,4 +1,4 @@
-# Spear: Financial Planning Model
+# Strategic Planning for Early Retirement (SPEAR)
 
 Spear is a Python library for financial planning and modeling. It provides tools to simulate and analyze various financial scenarios over time.
 
