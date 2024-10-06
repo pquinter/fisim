@@ -40,8 +40,8 @@ class InOrOutPerYear:
     multiplier: float = 1
 
     def __post_init__(self):
-        self.base_value = np.full(self.duration, self.initial_value)
-        self.multiplier = np.full(self.duration, self.multiplier)
+        self.base_value = np.full(self.duration, self.initial_value, dtype=int)
+        self.multiplier = np.full(self.duration, self.multiplier, dtype=float)
         self.start_year = self.start_year or self._get_current_year()
         self._validate_positive_values(self.base_value, "Base value")
         self._validate_positive_values(self.multiplier, "Multiplier")

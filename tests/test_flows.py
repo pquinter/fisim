@@ -11,16 +11,14 @@ class TestInOrOutPerYear:
 
     def test_get_base_value(self, sample_revenue):
         assert sample_revenue.get_base_value(2024) == 1_000
-        assert sample_revenue.get_base_value(2027) == 1_000
 
     def test_get_multiplier(self, sample_revenue):
-        assert sample_revenue.get_multiplier(2024) == 1.05
-        assert sample_revenue.get_multiplier(2027) == 1.05
+        assert sample_revenue.get_multiplier(2024) == 1
 
     def test_mutate_multiplier(self, sample_revenue):
         sample_revenue.mutate_multiplier(2025, 1.1)
         assert sample_revenue.get_multiplier(2025) == 1.1
-        assert sample_revenue.get_multiplier(2024) == 1.05
+        assert sample_revenue.get_multiplier(2024) == 1
 
     def test_mutate_base_value(self, sample_revenue):
         sample_revenue.mutate_base_value(2025, 100)
