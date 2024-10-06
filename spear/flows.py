@@ -86,12 +86,15 @@ class InOrOutPerYear:
         year_index = self._convert_year_to_index(year)
         self.base_value[year_index] += base_value
 
-    def plot(self, duration: Optional[int] = None, ax: Optional[plt.Axes] = None) -> plt.Axes:
+    def plot(
+        self, duration: Optional[int] = None, ax: Optional[plt.Axes] = None, **kwargs
+    ) -> plt.Axes:
         ax = ax or plt.gca()
         ax.plot(
             range(self.start_year, self.start_year + (duration or self.duration)),
             self.base_value[: duration or self.duration],
             label=self.name,
+            **kwargs,
         )
         ax.set(
             xlabel="Year",
@@ -103,6 +106,7 @@ class InOrOutPerYear:
             plt.FuncFormatter(lambda x, p: f"{x/1e3:.0f}K" if x < 1e6 else f"{x/1e6:.1f}M")
         )
         ax.legend()
+        ax.grid(True, alpha=0.3)
         return ax
 
     def __getitem__(self, year: int) -> int:
