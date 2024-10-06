@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import pytest
 
 from spear.flows import InOrOutPerYear
@@ -33,7 +34,7 @@ class TestInOrOutPerYear:
 
     def test_getitem(self, sample_revenue):
         assert sample_revenue[2024] == 1_000
-        assert sample_revenue[2027] == 1000
+        assert sample_revenue[2027] == 1_000
 
     def test_invalid_multiplier(self):
         with pytest.raises(ValueError, match="Multiplier must be zero or positive."):
@@ -54,9 +55,17 @@ class TestInOrOutPerYear:
     def test_convert_year_to_index(self, sample_revenue, year, expected_index):
         assert sample_revenue._convert_year_to_index(year) == expected_index
 
+    def test_plot(self, sample_revenue):
+        ax = sample_revenue.plot()
+        assert len(ax.get_lines()[0].get_xdata()) == sample_revenue.duration
+        # Close figure to avoid messing with other plot tests
+        plt.close(ax.figure)
+
     def test_plot_with_custom_duration(self, sample_revenue):
         ax = sample_revenue.plot(duration=5)
         assert len(ax.get_lines()[0].get_xdata()) == 5
+        # Close figure to avoid messing with other plot tests
+        plt.close(ax.figure)
 
     def test_grow_one_year(self, sample_revenue):
         initial_value = sample_revenue.get_base_value(2024)
