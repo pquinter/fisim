@@ -6,21 +6,27 @@ from spear.model import FinancialModel
 
 
 @pytest.fixture
-def sample_flow():
+def sample_revenue():
     return InOrOutPerYear(
-        name="Test Flow", initial_value=1_000, duration=10, multiplier=1.05, start_year=2024
+        name="Test Revenue", initial_value=1_000, duration=10, multiplier=1.05, start_year=2024
     )
 
 
 @pytest.fixture
-def sample_capped_asset():
+def sample_expense():
+    return InOrOutPerYear(
+        name="Test Expense", initial_value=1_000, duration=10, multiplier=1.05, start_year=2024
+    )
+
+
+@pytest.fixture
+def sample_cash():
     return Asset(
-        name="Test Capped Asset",
+        name="Test Cash",
         initial_value=1_000,
         start_year=2024,
-        duration=10,
         cap_value=1_500,
-        growth_rate=0.05,
+        growth_rate=0.01,
     )
 
 
@@ -30,18 +36,27 @@ def sample_stock():
         name="Test Stock",
         initial_value=1_000,
         start_year=2024,
-        duration=10,
         growth_rate=0.05,
-        allocation=0.5,
+        allocation=0.7,
     )
 
 
 @pytest.fixture
-def basic_model():
-    revenues = [InOrOutPerYear("Salary", 100000, 2023, 10)]
-    expenses = [InOrOutPerYear("Living Expenses", 70000, 2023, 10)]
-    assets = [
-        Asset("Stocks", 50000, 2023, 10, allocation=0.7),
-        Asset("Bonds", 20000, 2023, 10, allocation=0.3),
-    ]
-    return FinancialModel(revenues, expenses, assets, duration=10)
+def sample_bond():
+    return Asset(
+        name="Test Bond",
+        initial_value=1_000,
+        start_year=2024,
+        growth_rate=0.05,
+        allocation=0.3,
+    )
+
+
+@pytest.fixture
+def basic_model(sample_revenue, sample_stock, sample_bond, sample_cash):
+    return FinancialModel(
+        revenues=[sample_revenue],
+        expenses=[sample_revenue],
+        assets=[sample_cash, sample_bond, sample_stock],
+        duration=10,
+    )

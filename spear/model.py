@@ -54,8 +54,14 @@ class FinancialModel:
         """
         Get the earliest start year from all financial planning moneys.
         """
-        all_moneys = self.revenues + self.expenses + self.assets + self.events
-        return min(money.start_year for money in all_moneys)
+        return min(money.start_year for money in self.all_moneys)
+
+    @property
+    def all_moneys(self) -> List[InOrOutPerYear]:
+        """
+        Get all financial planning moneys.
+        """
+        return self.revenues + self.expenses + self.assets + self.events
 
     def _enable_logging(self):
         """
@@ -161,12 +167,12 @@ class FinancialModel:
             asset.grow(year)
         self._log("debug", f"Assets grown for year {year}")
 
-    def run(self) -> None:
+    def run(self, duration: Optional[int] = None) -> None:
         """
         Run the financial planning simulation.
         """
         self._log("info", "Starting financial planning simulation")
-        for year in range(self.start_year, self.start_year + self.duration):
+        for year in range(self.start_year, self.start_year + (duration or self.duration)):
             self._log("info", f"Processing year {year}")
             cash_flow = self._balance_cash_flow(year)
             self._distribute_cash_flow(year, cash_flow)
@@ -201,3 +207,24 @@ class FinancialModel:
         ax = self.plot_assets(ax)
         self.plot_cash_flow(ax)
         return ax
+
+    def _get_money(self, name: str, money_list: List[InOrOutPerYear]) -> Optional[InOrOutPerYear]:
+        """
+        Get a flow or an asset by name.
+        """
+        for money in money_list:
+            if money.name == name:
+                return money
+        return None
+
+    def get_asset(self, name: str) -> Optional[Asset]:
+        """
+        Get an asset by name.
+        """
+        return self._get_money(name, self.assets)
+
+    def get_flow(self, name: str) -> Optional[InOrOutPerYear]:
+        """
+        Get a flow by name.
+        """
+        return self._get_money(name, self.revenues + self.expenses)
