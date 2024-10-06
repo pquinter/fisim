@@ -37,22 +37,22 @@ class TestRunOperations:
 
     def test_balance_cash_flow(self):
         """No cash flow in 2024 because revenues equal expenses."""
-        assert self.basic_model._balance_cash_flow(2024) == 0
+        assert self.basic_model.balance_cash_flow(2024) == 0
 
     def test_balance_positive_cash_flow(self, sample_revenue):
         """Add a revenue that creates 1_000 positive cash flow in 2024."""
         self.basic_model.revenues.append(sample_revenue)
-        assert self.basic_model._balance_cash_flow(2024) == 1_000
+        assert self.basic_model.balance_cash_flow(2024) == 1_000
 
     def test_balance_negative_cash_flow(self, sample_expense):
         """Add an expense that creates 1_000 negative cash flow in 2024."""
         self.basic_model.expenses.append(sample_expense)
-        assert self.basic_model._balance_cash_flow(2024) == -1_000
+        assert self.basic_model.balance_cash_flow(2024) == -1_000
 
     def test_withdraw_funds_from_cash(self):
         """Withdraw enough funds to impact cash only."""
         to_withdraw = 1_000
-        self.basic_model._withdraw_funds(2024, to_withdraw, self.basic_model.assets)
+        self.basic_model.withdraw_funds(2024, to_withdraw, self.basic_model.assets)
         assert (
             self.basic_model.get_asset("Test Cash").get_base_value(2024)
             == self.initial_cash_value - to_withdraw
@@ -69,7 +69,7 @@ class TestRunOperations:
     def test_withdraw_funds_from_bond(self):
         """Withdraw enough funds to impact both cash and bonds, but not stock."""
         to_withdraw = 1_500
-        self.basic_model._withdraw_funds(2024, to_withdraw, self.basic_model.assets)
+        self.basic_model.withdraw_funds(2024, to_withdraw, self.basic_model.assets)
         # Cash is depleted
         assert self.basic_model.get_asset("Test Cash").get_base_value(2024) == 0
         # Bonds are depleted by the amount withdrawn minus the initial cash value
@@ -85,7 +85,7 @@ class TestRunOperations:
     def test_withdraw_funds_from_stock(self):
         """Withdraw enough funds to impact all assets."""
         to_withdraw = 2_500
-        self.basic_model._withdraw_funds(2024, to_withdraw, self.basic_model.assets)
+        self.basic_model.withdraw_funds(2024, to_withdraw, self.basic_model.assets)
         # Cash is depleted
         assert self.basic_model.get_asset("Test Cash").get_base_value(2024) == 0
         # Bonds are depleted
@@ -100,7 +100,7 @@ class TestRunOperations:
     def test_invest_in_capped_cash(self):
         """Invest money only sufficient to impact capped assets."""
         to_invest = 500
-        self.basic_model._invest(2024, to_invest)
+        self.basic_model.invest(2024, to_invest)
         # Cash increases
         assert (
             self.basic_model.get_asset("Test Cash").get_base_value(2024)
@@ -119,7 +119,7 @@ class TestRunOperations:
         """Invest sufficient money to fill cash cap and allocate remaining to bonds and stocks."""
         # Should leave 2_000 to invest
         to_invest = 2_500
-        self.basic_model._invest(2024, to_invest)
+        self.basic_model.invest(2024, to_invest)
         # Cash increases
         assert self.basic_model.get_asset("Test Cash").get_base_value(2024) == 1_500
         # Bonds and stocks increase according to allocation, 1_000 each
@@ -146,9 +146,9 @@ class TestRun:
         """Cash should first be balanced, then distributed, then assets grown."""
         # Mock the methods to track their call order
         call_order = []
-        basic_model._balance_cash_flow = lambda y: call_order.append("balance")
-        basic_model._distribute_cash_flow = lambda y, f: call_order.append("distribute")
-        basic_model._grow_assets = lambda y: call_order.append("grow")
+        basic_model.balance_cash_flow = lambda y: call_order.append("balance")
+        basic_model.distribute_cash_flow = lambda y, f: call_order.append("distribute")
+        basic_model.grow_assets = lambda y: call_order.append("grow")
 
         # Run the simulation for one year
         basic_model.run(duration=1)

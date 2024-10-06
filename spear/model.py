@@ -86,7 +86,7 @@ class FinancialModel:
         if self.logger:
             getattr(self.logger, level)(message)
 
-    def _get_events(self, year: int) -> List[Event]:
+    def get_events(self, year: int) -> List[Event]:
         """
         Get events for a given year.
         """
@@ -94,8 +94,8 @@ class FinancialModel:
         self._log("debug", f"Events for year {year}: {events}")
         return events
 
-    def _apply_events(self, year: int) -> None:
-        for event in self._get_events(year):
+    def apply_events(self, year: int) -> None:
+        for event in self.get_events(year):
             self._log("info", f"Applying event in year {year}: {event}")
             for affected_io in event.affected_ios:
                 start_year = event.start_year
@@ -103,11 +103,11 @@ class FinancialModel:
                 for y in range(start_year, end_year):
                     affected_io.mutate_multiplier(y, event.multiplier)
 
-    def _balance_cash_flow(self, year: int) -> int:
+    def balance_cash_flow(self, year: int) -> int:
         """
         Subtract total expenses and debt from total revenues, and return the cash flow.
         """
-        self._apply_events(year)
+        self.apply_events(year)
         year_revenues = sum(revenue[year] for revenue in self.revenues)
         year_expenses = sum(expense[year] for expense in self.expenses) + self.debt[year]
         cash_flow = year_revenues - year_expenses
@@ -118,7 +118,7 @@ class FinancialModel:
         )
         return cash_flow
 
-    def _invest(self, year: int, amount: int) -> None:
+    def invest(self, year: int, amount: int) -> None:
         """
         Invest amount into assets with cap, then according to allocation.
         """
@@ -136,18 +136,18 @@ class FinancialModel:
             amount_invested = asset.deposit(year, allocated_amount)
             self._log("info", f"Invested in year {year}: {amount_invested:_} in {asset.name}")
 
-    def _distribute_cash_flow(self, year: int, cash_flow: int) -> None:
+    def distribute_cash_flow(self, year: int, cash_flow: int) -> None:
         """
         Distribute cash flow to assets or debt.
         """
         if cash_flow < 0:
             self._log("info", f"Negative cash flow in year {year}. Withdrawing funds.")
-            self._withdraw_funds(year, -cash_flow, self.assets)
+            self.withdraw_funds(year, -cash_flow, self.assets)
         else:
             self._log("info", f"Positive cash flow in year {year}. Investing surplus.")
-            self._invest(year, cash_flow)
+            self.invest(year, cash_flow)
 
-    def _withdraw_funds(self, year: int, amount: int, asset_order: List[Asset]) -> None:
+    def withdraw_funds(self, year: int, amount: int, asset_order: List[Asset]) -> None:
         """
         Recursively withdraw funds from assets in order.
         """
@@ -160,9 +160,9 @@ class FinancialModel:
         remaining = amount - withdrawn
         self._log("info", f"Withdrew {withdrawn:_} from {current_asset.name} in year {year}")
 
-        return self._withdraw_funds(year, remaining, asset_order[1:])
+        return self.withdraw_funds(year, remaining, asset_order[1:])
 
-    def _grow_assets(self, year: int) -> None:
+    def grow_assets(self, year: int) -> None:
         for asset in self.assets:
             asset.grow(year)
         self._log("debug", f"Assets grown for year {year}")
@@ -174,9 +174,9 @@ class FinancialModel:
         self._log("info", "Starting financial planning simulation")
         for year in range(self.start_year, self.start_year + (duration or self.duration)):
             self._log("info", f"Processing year {year}")
-            cash_flow = self._balance_cash_flow(year)
-            self._distribute_cash_flow(year, cash_flow)
-            self._grow_assets(year)
+            cash_flow = self.balance_cash_flow(year)
+            self.distribute_cash_flow(year, cash_flow)
+            self.grow_assets(year)
         self._log("info", "Financial planning simulation completed")
 
     def _plot_values(self, values: List[InOrOutPerYear], ax: Optional[plt.Axes] = None) -> plt.Axes:
@@ -208,9 +208,11 @@ class FinancialModel:
         self.plot_cash_flow(ax)
         return ax
 
-    def _get_money(self, name: str, money_list: List[InOrOutPerYear]) -> Optional[InOrOutPerYear]:
+    def _get_money_by_name(
+        self, name: str, money_list: List[InOrOutPerYear]
+    ) -> Optional[InOrOutPerYear]:
         """
-        Get a flow or an asset by name.
+        Filter a list of InOrOutPerYears or its subclasses by name.
         """
         for money in money_list:
             if money.name == name:
@@ -221,10 +223,10 @@ class FinancialModel:
         """
         Get an asset by name.
         """
-        return self._get_money(name, self.assets)
+        return self._get_money_by_name(name, self.assets)
 
     def get_flow(self, name: str) -> Optional[InOrOutPerYear]:
         """
         Get a flow by name.
         """
-        return self._get_money(name, self.revenues + self.expenses)
+        return self._get_money_by_name(name, self.revenues + self.expenses)
