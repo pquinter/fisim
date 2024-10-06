@@ -43,8 +43,13 @@ class InOrOutPerYear:
         self.base_value = np.full(self.duration, self.initial_value)
         self.multiplier = np.full(self.duration, self.multiplier)
         self.start_year = self.start_year or self._get_current_year()
-        if np.any(self.multiplier < 0):
-            raise ValueError("Multiplier must be zero or positive.")
+        self._validate_positive_values(self.base_value, "Base value")
+        self._validate_positive_values(self.multiplier, "Multiplier")
+
+    @staticmethod
+    def _validate_positive_values(values: np.ndarray, name: str):
+        if np.any(values < 0):
+            raise ValueError(f"{name} must be zero or positive.")
 
     def __str__(self) -> str:
         """
@@ -73,6 +78,10 @@ class InOrOutPerYear:
         year_index = self._convert_year_to_index(year)
         self.multiplier[year_index] = multiplier
 
+    def mutate_base_value(self, year: int, base_value: int):
+        year_index = self._convert_year_to_index(year)
+        self.base_value[year_index] = base_value
+
     def add_to_base_value(self, year: int, base_value: int):
         year_index = self._convert_year_to_index(year)
         self.base_value[year_index] += base_value
@@ -94,3 +103,14 @@ class InOrOutPerYear:
     def __getitem__(self, year: int) -> int:
         year_index = self._convert_year_to_index(year)
         return self.base_value[year_index]
+
+    def grow(self, year: int) -> None:
+        """
+        Multiply the base value of specified year, and assign result to base value of next year.
+        Can be used to model e.g. inflation or stock growth.
+        """
+        year_index = self._convert_year_to_index(year)
+        if year_index + 1 < self.duration:
+            self.base_value[year_index + 1] = (
+                self.base_value[year_index] * self.multiplier[year_index]
+            )

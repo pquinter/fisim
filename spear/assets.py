@@ -46,20 +46,10 @@ class Asset(InOrOutPerYear):
         self.cap_value = cap_value or float("inf")
         self.allocation = allocation
 
-    def grow(self, year: int) -> None:
-        """
-        Grow the asset for a given year.
-        """
-        year_index = self._convert_year_to_index(year)
-        if year_index + 1 < self.duration:
-            self.base_value[year_index + 1] = (
-                self.base_value[year_index] * self.multiplier[year_index]
-            )
-
     def withdraw(self, year: int, amount: int) -> int:
         """
         Withdraw an amount from the asset for a given year.
-        Returns the amount actually withdrawn.
+        Returns the amount actually withdrawn, based on available funds.
         """
         year_index = self._convert_year_to_index(year)
         available = self.base_value[year_index]

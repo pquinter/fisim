@@ -39,9 +39,9 @@ class FinancialModel:
         self.debt = self.debt or InOrOutPerYear(
             name="Debt", initial_value=0, start_year=self.start_year, duration=self.duration + 1
         )
-        self._verify_asset_allocation()
+        self._validate_asset_allocation()
 
-    def _verify_asset_allocation(self) -> None:
+    def _validate_asset_allocation(self) -> None:
         """
         Raise an error if the total allocation is not 1.
         """
@@ -99,7 +99,7 @@ class FinancialModel:
 
     def _balance_cash_flow(self, year: int) -> int:
         """
-        Balance the cash flow for a given year.
+        Subtract total expenses and debt from total revenues, and return the cash flow.
         """
         self._apply_events(year)
         year_revenues = sum(revenue[year] for revenue in self.revenues)
@@ -130,9 +130,10 @@ class FinancialModel:
             amount_invested = asset.deposit(year, allocated_amount)
             self._log("info", f"Invested in year {year}: {amount_invested:_} in {asset.name}")
 
-    def _distribute_cash_flow(self, year: int) -> None:
-        cash_flow = self._balance_cash_flow(year)
-
+    def _distribute_cash_flow(self, year: int, cash_flow: int) -> None:
+        """
+        Distribute cash flow to assets or debt.
+        """
         if cash_flow < 0:
             self._log("info", f"Negative cash flow in year {year}. Withdrawing funds.")
             self._withdraw_funds(year, -cash_flow, self.assets)
@@ -149,9 +150,9 @@ class FinancialModel:
             self.debt.add_to_base_value(year + 1, amount)
             return
         current_asset = asset_order[0]
-        withdrawn = current_asset.withdraw(year + 1, amount)
+        withdrawn = current_asset.withdraw(year, amount)
         remaining = amount - withdrawn
-        self._log("info", f"Withdrew {withdrawn:_} from {current_asset.name} in year {year + 1}")
+        self._log("info", f"Withdrew {withdrawn:_} from {current_asset.name} in year {year}")
 
         return self._withdraw_funds(year, remaining, asset_order[1:])
 
@@ -167,8 +168,9 @@ class FinancialModel:
         self._log("info", "Starting financial planning simulation")
         for year in range(self.start_year, self.start_year + self.duration):
             self._log("info", f"Processing year {year}")
+            cash_flow = self._balance_cash_flow(year)
+            self._distribute_cash_flow(year, cash_flow)
             self._grow_assets(year)
-            self._distribute_cash_flow(year)
         self._log("info", "Financial planning simulation completed")
 
     def _plot_values(self, values: List[InOrOutPerYear], ax: Optional[plt.Axes] = None) -> plt.Axes:
