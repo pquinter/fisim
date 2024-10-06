@@ -89,8 +89,34 @@ class TestRunOperations:
             to_withdraw - self.initial_cash_value - self.initial_bond_value
         )
 
-    def test_invest(self):
-        pass
+    def test_invest_in_capped_cash(self):
+        """Invest money only sufficient to impact capped assets."""
+        to_invest = 500
+        self.basic_model._invest(2024, to_invest)
+        # Cash increases
+        assert (
+            self.basic_model.get_asset("Test Cash").get_base_value(2024)
+            == self.initial_cash_value + to_invest
+        )
+        # But bonds and stocks are unchanged
+        assert (
+            self.basic_model.get_asset("Test Bond").get_base_value(2024) == self.initial_bond_value
+        )
+        assert (
+            self.basic_model.get_asset("Test Stock").get_base_value(2024)
+            == self.initial_stock_value
+        )
+
+    def test_invest_in_bonds_and_stocks(self):
+        """Invest sufficient money to fill cash cap and allocate remaining to bonds and stocks."""
+        # Should leave 2_000 to invest
+        to_invest = 2_500
+        self.basic_model._invest(2024, to_invest)
+        # Cash increases
+        assert self.basic_model.get_asset("Test Cash").get_base_value(2024) == 1_500
+        # Bonds and stocks increase according to allocation, 1_000 each
+        assert self.basic_model.get_asset("Test Bond").get_base_value(2024) == 2_000
+        assert self.basic_model.get_asset("Test Stock").get_base_value(2024) == 2_000
 
 
 class TestRun:

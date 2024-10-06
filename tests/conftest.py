@@ -37,7 +37,7 @@ def sample_stock():
         initial_value=1_000,
         start_year=2024,
         growth_rate=0.05,
-        allocation=0.7,
+        allocation=0.5,
     )
 
 
@@ -48,7 +48,7 @@ def sample_bond():
         initial_value=1_000,
         start_year=2024,
         growth_rate=0.05,
-        allocation=0.3,
+        allocation=0.5,
     )
 
 
