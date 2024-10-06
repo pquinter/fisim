@@ -98,6 +98,7 @@ class InOrOutPerYear:
             ylabel="Value",
             xticks=range(self.start_year, self.start_year + (duration or self.duration)),
         )
+        ax.tick_params(axis="x", rotation=60)
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda x, p: f"{x/1e3:.0f}K" if x < 1e6 else f"{x/1e6:.1f}M")
         )
