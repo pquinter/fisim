@@ -34,8 +34,8 @@ class FinancialModel:
     logger: Optional[logging.Logger] = None
 
     def __post_init__(self):
-        self.enable_logging and self._enable_logging()
         self.events = self.events or []
+        self.enable_logging and self._enable_logging()
         self.debt = self.debt or InOrOutPerYear(
             name="Debt", initial_value=0, start_year=self.start_year, duration=self.duration + 1
         )
@@ -124,8 +124,9 @@ class FinancialModel:
             self._log("info", f"Invested in year {year}: {amount_invested:_} in {asset.name}")
 
         # Then, allocate to assets with allocation
-        allocated_amounts = [amount * asset.allocation for asset in self.assets if asset.allocation]
-        for asset, allocated_amount in zip(self.assets, allocated_amounts):
+        allocated_assets = [asset for asset in self.assets if asset.allocation is not None]
+        allocated_amounts = [amount * asset.allocation for asset in allocated_assets]
+        for asset, allocated_amount in zip(allocated_assets, allocated_amounts):
             amount_invested = asset.deposit(year, allocated_amount)
             self._log("info", f"Invested in year {year}: {amount_invested:_} in {asset.name}")
 
