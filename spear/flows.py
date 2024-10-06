@@ -123,3 +123,14 @@ class InOrOutPerYear:
             self.base_value[year_index + 1] = (
                 self.base_value[year_index] * self.multiplier[year_index]
             )
+
+
+class Expense(InOrOutPerYear):
+    """
+    Expense per year with inflation.
+    """
+
+    def __init__(self, inflation_rate: float, **kwargs):
+        multiplier = 1 + inflation_rate
+        kwargs["multiplier"] = multiplier
+        super().__init__(**kwargs)

@@ -26,10 +26,14 @@ class TestFinancialModelBasics:
             enable_logging=True,
         )
 
-    def test_get_asset_by_name(self, basic_model, sample_cash, sample_stock, sample_bond):
+    def test_get_money_by_name(
+        self, basic_model, sample_cash, sample_stock, sample_bond, sample_expense, sample_revenue
+    ):
         assert basic_model.get_asset("Test Cash") == sample_cash
         assert basic_model.get_asset("Test Bond") == sample_bond
         assert basic_model.get_asset("Test Stock") == sample_stock
+        assert basic_model.get_expense("Test Expense") == sample_expense
+        assert basic_model.get_revenue("Test Revenue") == sample_revenue
 
 
 class TestRunOperations:

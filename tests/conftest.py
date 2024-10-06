@@ -1,21 +1,19 @@
 import pytest
 
 from spear.assets import Asset
-from spear.flows import InOrOutPerYear
+from spear.flows import Expense, InOrOutPerYear
 from spear.model import FinancialModel
 
 
 @pytest.fixture
 def sample_revenue():
-    return InOrOutPerYear(
-        name="Test Revenue", initial_value=1_000, duration=10, multiplier=1.05, start_year=2024
-    )
+    return InOrOutPerYear(name="Test Revenue", initial_value=1_000, duration=10, start_year=2024)
 
 
 @pytest.fixture
 def sample_expense():
-    return InOrOutPerYear(
-        name="Test Expense", initial_value=1_000, duration=10, multiplier=1.05, start_year=2024
+    return Expense(
+        name="Test Expense", initial_value=1_000, duration=10, inflation_rate=0.05, start_year=2024
     )
 
 
@@ -53,10 +51,10 @@ def sample_bond():
 
 
 @pytest.fixture
-def basic_model(sample_revenue, sample_stock, sample_bond, sample_cash):
+def basic_model(sample_revenue, sample_expense, sample_stock, sample_bond, sample_cash):
     return FinancialModel(
         revenues=[sample_revenue],
-        expenses=[sample_revenue],
+        expenses=[sample_expense],
         assets=[sample_cash, sample_bond, sample_stock],
         duration=10,
     )

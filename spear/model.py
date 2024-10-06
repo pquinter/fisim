@@ -10,7 +10,7 @@ import numpy as np
 
 from .assets import Asset
 from .events import Event
-from .flows import InOrOutPerYear
+from .flows import Expense, InOrOutPerYear
 
 
 @dataclass
@@ -167,6 +167,13 @@ class FinancialModel:
             asset.grow(year)
         self._log("debug", f"Assets grown for year {year}")
 
+    def add_inflation(self, year: int) -> None:
+        """
+        Add inflation to all expenses.
+        """
+        for expense in self.expenses:
+            expense.grow(year)
+
     def run(self, duration: Optional[int] = None) -> None:
         """
         Run the financial planning simulation.
@@ -177,6 +184,7 @@ class FinancialModel:
             cash_flow = self.balance_cash_flow(year)
             self.distribute_cash_flow(year, cash_flow)
             self.grow_assets(year)
+            self.add_inflation(year)
         self._log("info", "Financial planning simulation completed")
 
     def _plot_values(self, values: List[InOrOutPerYear], ax: Optional[plt.Axes] = None) -> plt.Axes:
@@ -225,8 +233,14 @@ class FinancialModel:
         """
         return self._get_money_by_name(name, self.assets)
 
-    def get_flow(self, name: str) -> Optional[InOrOutPerYear]:
+    def get_expense(self, name: str) -> Optional[Expense]:
         """
-        Get a flow by name.
+        Get an expense by name.
         """
-        return self._get_money_by_name(name, self.revenues + self.expenses)
+        return self._get_money_by_name(name, self.expenses)
+
+    def get_revenue(self, name: str) -> Optional[InOrOutPerYear]:
+        """
+        Get a revenue by name.
+        """
+        return self._get_money_by_name(name, self.revenues)
