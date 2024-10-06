@@ -47,6 +47,7 @@ class TestRunOperations:
             self.basic_model.get_asset("Test Cash").get_base_value(2024)
             == self.initial_cash_value - to_withdraw
         )
+        # Stocks and bonds are unchanged
         assert (
             self.basic_model.get_asset("Test Bond").get_base_value(2024) == self.initial_bond_value
         )
@@ -60,10 +61,13 @@ class TestRunOperations:
         to_withdraw = 1_500
         self.basic_model._withdraw_funds(2024, to_withdraw, self.basic_model.assets)
 
+        # Cash is depleted
         assert self.basic_model.get_asset("Test Cash").get_base_value(2024) == 0
+        # Bonds are depleted by the amount withdrawn minus the initial cash value
         assert self.basic_model.get_asset("Test Bond").get_base_value(
             2024
         ) == self.initial_bond_value - (to_withdraw - self.initial_cash_value)
+        # Stocks are unchanged
         assert (
             self.basic_model.get_asset("Test Stock").get_base_value(2024)
             == self.initial_stock_value
@@ -74,8 +78,11 @@ class TestRunOperations:
         to_withdraw = 2_500
         self.basic_model._withdraw_funds(2024, to_withdraw, self.basic_model.assets)
 
+        # Cash is depleted
         assert self.basic_model.get_asset("Test Cash").get_base_value(2024) == 0
+        # Bonds are depleted
         assert self.basic_model.get_asset("Test Bond").get_base_value(2024) == 0
+        # Stocks are depleted by the amount withdrawn minus the initial cash and bond values
         assert self.basic_model.get_asset("Test Stock").get_base_value(
             2024
         ) == self.initial_stock_value - (
