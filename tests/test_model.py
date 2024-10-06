@@ -26,6 +26,11 @@ class TestFinancialModelBasics:
             enable_logging=True,
         )
 
+    def test_get_asset_by_name(self, basic_model, sample_cash, sample_stock, sample_bond):
+        assert basic_model.get_asset("Test Cash") == sample_cash
+        assert basic_model.get_asset("Test Bond") == sample_bond
+        assert basic_model.get_asset("Test Stock") == sample_stock
+
 
 class TestRunOperations:
     @pytest.fixture(autouse=True)
