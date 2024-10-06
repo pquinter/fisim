@@ -121,6 +121,7 @@ class TestRun:
         basic_model.run()
 
     def test_order_of_operations(self, basic_model):
+        """Cash should first be balanced, then distributed, then assets grown."""
         # Mock the methods to track their call order
         call_order = []
         basic_model._balance_cash_flow = lambda y: call_order.append("balance")
