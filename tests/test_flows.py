@@ -100,3 +100,14 @@ class TestInOrOutPerYear:
 
         # The value for the last year should remain unchanged
         assert sample_revenue.get_base_value(last_year) == initial_value
+
+
+class TestExpense:
+    def test_expense_gets_inflated(self, sample_expense):
+        for year in range(2024, 2027):
+            sample_expense.grow(year)
+
+        assert sample_expense.get_base_value(2024) == 1_000
+        assert sample_expense.get_base_value(2025) == 1_020
+        assert abs(sample_expense.get_base_value(2026) - int(1_000 * (1.02**2))) <= 1
+        assert abs(sample_expense.get_base_value(2027) - int(1_000 * (1.02**3))) <= 1

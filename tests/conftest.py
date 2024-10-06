@@ -13,7 +13,7 @@ def sample_revenue():
 @pytest.fixture
 def sample_expense():
     return Expense(
-        name="Test Expense", initial_value=1_000, duration=10, inflation_rate=0.05, start_year=2024
+        name="Test Expense", initial_value=1_000, duration=10, inflation_rate=0.02, start_year=2024
     )
 
 
