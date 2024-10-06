@@ -1,13 +1,20 @@
 import pytest
 
 from spear.assets import Asset
-from spear.flows import Expense, InOrOutPerYear
+from spear.flows import Expense, InOrOutPerYear, TaxableIncome
 from spear.model import FinancialModel
 
 
 @pytest.fixture
 def sample_revenue():
     return InOrOutPerYear(name="Test Revenue", initial_value=1_000, duration=10, start_year=2024)
+
+
+@pytest.fixture
+def sample_taxable_income():
+    return TaxableIncome(
+        name="Test Taxable Income", initial_value=150_000, start_year=2024, state="MA"
+    )
 
 
 @pytest.fixture
