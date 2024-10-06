@@ -1,3 +1,5 @@
+[![CI](https://github.com/pquinter/financial-planning/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/pquinter/financial-planning/actions/workflows/ci.yml)
+
 # Strategic Planning for Early Retirement (SPEAR)
 
 Spear is a Python library for financial planning and modeling. It provides tools to simulate and analyze various financial scenarios over time.
