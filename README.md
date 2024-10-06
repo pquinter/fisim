@@ -1,4 +1,4 @@
-[![CI](https://github.com/pquinter/financial-planning/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/pquinter/financial-planning/actions/workflows/ci.yml)
+[![Tests](https://github.com/pquinter/financial-planning/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/pquinter/financial-planning/actions/workflows/ci.yml)
 
 # Strategic Planning for Early Retirement (SPEAR)
 
