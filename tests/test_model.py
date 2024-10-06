@@ -25,15 +25,16 @@ class TestRunOperations:
         self.initial_stock_value = self.basic_model.get_asset("Test Stock").get_base_value(2024)
 
     def test_balance_cash_flow(self):
+        """No cash flow in 2024 because revenues equal expenses."""
         assert self.basic_model._balance_cash_flow(2024) == 0
 
     def test_balance_positive_cash_flow(self, sample_revenue):
-        # This adds 1_000 to the cash flow in 2024
+        """Add a revenue that creates 1_000 positive cash flow in 2024."""
         self.basic_model.revenues.append(sample_revenue)
         assert self.basic_model._balance_cash_flow(2024) == 1_000
 
     def test_balance_negative_cash_flow(self, sample_expense):
-        # This subtracts 1_000 from the cash flow in 2024
+        """Add an expense that creates 1_000 negative cash flow in 2024."""
         self.basic_model.expenses.append(sample_expense)
         assert self.basic_model._balance_cash_flow(2024) == -1_000
 
