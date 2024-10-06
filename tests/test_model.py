@@ -15,6 +15,17 @@ class TestFinancialModelBasics:
     def test_valid_asset_allocation_does_not_raise_error(self, sample_stock, sample_bond):
         FinancialModel(revenues=[], expenses=[], assets=[sample_stock, sample_bond], duration=10)
 
+    def test_model_with_logging(
+        self, sample_cash, sample_stock, sample_bond, sample_revenue, sample_expense
+    ):
+        FinancialModel(
+            revenues=[sample_revenue],
+            expenses=[sample_expense],
+            assets=[sample_cash, sample_stock, sample_bond],
+            duration=10,
+            enable_logging=True,
+        )
+
 
 class TestRunOperations:
     @pytest.fixture(autouse=True)
@@ -119,6 +130,17 @@ class TestRunOperations:
 class TestRun:
     def test_run_with_no_errors(self, basic_model):
         basic_model.run()
+
+    def test_run_with_logging(
+        self, sample_cash, sample_stock, sample_bond, sample_revenue, sample_expense
+    ):
+        FinancialModel(
+            revenues=[sample_revenue],
+            expenses=[sample_expense],
+            assets=[sample_cash, sample_stock, sample_bond],
+            duration=10,
+            enable_logging=True,
+        ).run()
 
     def test_order_of_operations(self, basic_model):
         """Cash should first be balanced, then distributed, then assets grown."""
