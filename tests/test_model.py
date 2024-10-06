@@ -42,7 +42,6 @@ class TestRunOperations:
         """Withdraw enough funds to impact cash only."""
         to_withdraw = 1_000
         self.basic_model._withdraw_funds(2024, to_withdraw, self.basic_model.assets)
-
         assert (
             self.basic_model.get_asset("Test Cash").get_base_value(2024)
             == self.initial_cash_value - to_withdraw
@@ -60,7 +59,6 @@ class TestRunOperations:
         """Withdraw enough funds to impact both cash and bonds, but not stock."""
         to_withdraw = 1_500
         self.basic_model._withdraw_funds(2024, to_withdraw, self.basic_model.assets)
-
         # Cash is depleted
         assert self.basic_model.get_asset("Test Cash").get_base_value(2024) == 0
         # Bonds are depleted by the amount withdrawn minus the initial cash value
@@ -77,7 +75,6 @@ class TestRunOperations:
         """Withdraw enough funds to impact all assets."""
         to_withdraw = 2_500
         self.basic_model._withdraw_funds(2024, to_withdraw, self.basic_model.assets)
-
         # Cash is depleted
         assert self.basic_model.get_asset("Test Cash").get_base_value(2024) == 0
         # Bonds are depleted
