@@ -102,6 +102,16 @@ class TestRunOperations:
             to_withdraw - self.initial_cash_value - self.initial_bond_value
         )
 
+    def test_withdraw_funds_adds_debt_when_no_assets_can_absorb_negative_cash_flow(self):
+        """Withdraw enough funds from assets to leave a deficit, which is added as debt."""
+        to_withdraw = 4_000
+        self.basic_model.withdraw_funds(2024, to_withdraw, self.basic_model.assets)
+        # Debt is added for the deficit
+        assert self.basic_model.debt.get_base_value(2025) == 1_000
+        # Withdrawing again should just debt
+        self.basic_model.withdraw_funds(2024, to_withdraw, self.basic_model.assets)
+        assert self.basic_model.debt.get_base_value(2025) == 5_000
+
     def test_invest_in_capped_cash(self):
         """Invest money only sufficient to impact capped assets."""
         to_invest = 500
