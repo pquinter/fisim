@@ -17,35 +17,71 @@ class TestFinancialModelBasics:
 
 
 class TestRunOperations:
-    def test_balance_cash_flow(self, basic_model):
-        assert basic_model._balance_cash_flow(2024) == 0
+    @pytest.fixture(autouse=True)
+    def setup(self, basic_model):
+        self.basic_model = basic_model
+        self.initial_cash_value = self.basic_model.get_asset("Test Cash").get_base_value(2024)
+        self.initial_bond_value = self.basic_model.get_asset("Test Bond").get_base_value(2024)
+        self.initial_stock_value = self.basic_model.get_asset("Test Stock").get_base_value(2024)
 
-    def test_balance_positive_cash_flow(self, basic_model, sample_revenue):
+    def test_balance_cash_flow(self):
+        assert self.basic_model._balance_cash_flow(2024) == 0
+
+    def test_balance_positive_cash_flow(self, sample_revenue):
         # This adds 1_000 to the cash flow in 2024
-        basic_model.revenues.append(sample_revenue)
-        assert basic_model._balance_cash_flow(2024) == 1_000
+        self.basic_model.revenues.append(sample_revenue)
+        assert self.basic_model._balance_cash_flow(2024) == 1_000
 
-    def test_balance_negative_cash_flow(self, basic_model, sample_revenue):
+    def test_balance_negative_cash_flow(self, sample_expense):
         # This subtracts 1_000 from the cash flow in 2024
-        basic_model.expenses.append(sample_revenue)
-        assert basic_model._balance_cash_flow(2024) == -1_000
+        self.basic_model.expenses.append(sample_expense)
+        assert self.basic_model._balance_cash_flow(2024) == -1_000
 
-    def test_withdraw_funds_from_cash(self, basic_model):
-        initial_cash_value = basic_model.get_asset("Test Cash").get_base_value(2024)
-        initial_bond_value = basic_model.get_asset("Test Bond").get_base_value(2024)
-        initial_stock_value = basic_model.get_asset("Test Stock").get_base_value(2024)
-
+    def test_withdraw_funds_from_cash(self):
+        """Withdraw enough funds to impact cash only."""
         to_withdraw = 1_000
-        basic_model._withdraw_funds(2024, to_withdraw, basic_model.assets)
+        self.basic_model._withdraw_funds(2024, to_withdraw, self.basic_model.assets)
 
         assert (
-            basic_model.get_asset("Test Cash").get_base_value(2024)
-            == initial_cash_value - to_withdraw
+            self.basic_model.get_asset("Test Cash").get_base_value(2024)
+            == self.initial_cash_value - to_withdraw
         )
-        assert basic_model.get_asset("Test Bond").get_base_value(2024) == initial_bond_value
-        assert basic_model.get_asset("Test Stock").get_base_value(2024) == initial_stock_value
+        assert (
+            self.basic_model.get_asset("Test Bond").get_base_value(2024) == self.initial_bond_value
+        )
+        assert (
+            self.basic_model.get_asset("Test Stock").get_base_value(2024)
+            == self.initial_stock_value
+        )
 
-    def test_invest(self, basic_model):
+    def test_withdraw_funds_from_bond(self):
+        """Withdraw enough funds to impact both cash and bonds, but not stock."""
+        to_withdraw = 1_500
+        self.basic_model._withdraw_funds(2024, to_withdraw, self.basic_model.assets)
+
+        assert self.basic_model.get_asset("Test Cash").get_base_value(2024) == 0
+        assert self.basic_model.get_asset("Test Bond").get_base_value(
+            2024
+        ) == self.initial_bond_value - (to_withdraw - self.initial_cash_value)
+        assert (
+            self.basic_model.get_asset("Test Stock").get_base_value(2024)
+            == self.initial_stock_value
+        )
+
+    def test_withdraw_funds_from_stock(self):
+        """Withdraw enough funds to impact all assets."""
+        to_withdraw = 2_500
+        self.basic_model._withdraw_funds(2024, to_withdraw, self.basic_model.assets)
+
+        assert self.basic_model.get_asset("Test Cash").get_base_value(2024) == 0
+        assert self.basic_model.get_asset("Test Bond").get_base_value(2024) == 0
+        assert self.basic_model.get_asset("Test Stock").get_base_value(
+            2024
+        ) == self.initial_stock_value - (
+            to_withdraw - self.initial_cash_value - self.initial_bond_value
+        )
+
+    def test_invest(self):
         pass
 
 
