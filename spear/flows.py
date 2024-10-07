@@ -32,21 +32,23 @@ class TaxableIncome(InOrOutPerYear):
         if self.state not in STATE_TAX_RATES:
             raise ValueError(f"Unsupported state: {self.state}")
 
-    def tax(self, year: int) -> None:
+    def tax(self, year: int) -> int:
+        """
+        Subtract state and federal taxes from year's income.
+        Return amount taxed.
+        """
         year_index = self._convert_year_to_index(year)
-        self.base_value[year_index] -= calculate_total_tax(self.base_value[year_index], self.state)
+        tax_amount = calculate_total_tax(self.base_value[year_index], self.state)
+        self.base_value[year_index] -= tax_amount
+        return tax_amount
 
-    def withdraw(self, year: int, amount: int, pre_tax: bool = False) -> int:
+    def withdraw(self, year: int, amount: int) -> int:
         """
         Withdraw amount from income.
-        Return amount withdrawn.
+        Return amount withdrawn, depending on available funds.
         """
         year_index = self._convert_year_to_index(year)
-        if pre_tax:
-            self.base_value[year_index] -= amount
-        else:
-            total_tax = calculate_total_tax(self.base_value[year_index], self.state)
-            # First tax the amount, then withdraw
-            self.base_value[year_index] -= total_tax
-            self.base_value[year_index] -= amount
-        return amount
+        available_amount = self.base_value[year_index]
+        amount_withdrawn = min(available_amount, amount)
+        self.base_value[year_index] -= amount_withdrawn
+        return amount_withdrawn
