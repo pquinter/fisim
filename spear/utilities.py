@@ -37,7 +37,7 @@ def calculate_tax_liability(income: int, state: Optional[str] = None) -> float:
     return total_tax
 
 
-def calculate_total_tax(income: int, state: str) -> float:
+def calculate_total_tax(income: int, state: str) -> int:
     """
     Calculate the total federal and state tax liability for the given income.
 
@@ -50,9 +50,9 @@ def calculate_total_tax(income: int, state: str) -> float:
 
     Returns
     -------
-    float
+    int
         Total tax owed.
     """
     state_tax = calculate_tax_liability(income, state)
     federal_tax = calculate_tax_liability(income, state=None)
-    return state_tax + federal_tax
+    return int(state_tax + federal_tax)
