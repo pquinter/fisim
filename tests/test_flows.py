@@ -116,7 +116,7 @@ class TestExpense:
 
 class TestTaxableIncome:
     def test_tax_income_for_year(self, sample_taxable_income):
-        sample_taxable_income.tax_income(2024)
+        sample_taxable_income.tax(2024)
         assert sample_taxable_income[2024] == 150_000 - calculate_total_tax(
             150_000, sample_taxable_income.state
         )

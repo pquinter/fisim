@@ -165,19 +165,33 @@ class TestRun:
         """Cash should first be balanced, then distributed, then assets grown."""
         # Mock the methods to track their call order
         call_order = []
-        basic_model.balance_cash_flow = lambda y: call_order.append("balance")
+
+        def mock_balance_cash_flow(y):
+            call_order.append("balance")
+            return 1000  # Return a dummy cash flow value
+
+        basic_model.balance_cash_flow = mock_balance_cash_flow
+        basic_model.invest_pre_tax = lambda y, a: call_order.append("invest_pre_tax")
+        basic_model.tax_revenues = lambda y: call_order.append("tax_revenues")
         basic_model.distribute_cash_flow = lambda y, f: call_order.append("distribute")
         basic_model.grow_assets = lambda y: call_order.append("grow")
+        basic_model.add_inflation = lambda y: call_order.append("add_inflation")
 
         # Run the simulation for one year
         basic_model.run(duration=1)
-
         # Check if the methods were called in the correct order
-        assert call_order == [
+        expected_call_order = [
+            "balance",
+            "invest_pre_tax",
+            "tax_revenues",
             "balance",
             "distribute",
             "grow",
-        ], f"Expected call order 'balance', 'distribute', 'grow', but got {call_order}"
+            "add_inflation",
+        ]
+        assert (
+            call_order == expected_call_order
+        ), f"Expected call order {expected_call_order}, but got {call_order}"
 
 
 class TestApplyEvents:

@@ -2,6 +2,7 @@
 Main financial model class
 """
 import logging
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -10,7 +11,7 @@ import numpy as np
 
 from .assets import Asset
 from .events import Event
-from .flows import Expense, InOrOutPerYear
+from .flows import Expense, InOrOutPerYear, TaxableIncome
 
 
 @dataclass
@@ -107,7 +108,6 @@ class FinancialModel:
         """
         Subtract total expenses and debt from total revenues, and return the cash flow.
         """
-        self.apply_events(year)
         year_revenues = sum(revenue[year] for revenue in self.revenues)
         year_expenses = sum(expense[year] for expense in self.expenses) + self.debt[year]
         cash_flow = year_revenues - year_expenses
@@ -117,6 +117,36 @@ class FinancialModel:
             f"Cash flow for year {year}: {cash_flow:_}",
         )
         return cash_flow
+
+    def invest_pre_tax(self, year: int, amount: int) -> int:
+        """
+        Invest pre-tax income into assets.
+        Return amount remaining after investment.
+        """
+        if amount <= 0:
+            return 0
+
+        # Invest in pretax assets
+        pretax_assets = [asset for asset in self.assets if asset.pretax]
+        total_amount_invested = 0
+        for asset in pretax_assets:
+            amount_invested = asset.deposit(year, amount)
+            total_amount_invested += amount_invested
+            self._log("info", f"Invested in year {year}: {amount_invested:_} in {asset.name}")
+        if total_amount_invested <= 0:
+            return total_amount_invested
+
+        # Withdraw investments from pre-tax income
+        to_withdraw = deepcopy(total_amount_invested)
+        for revenue in self.revenues:
+            if isinstance(revenue, TaxableIncome):
+                withdrawn = revenue.withdraw(year, to_withdraw, pre_tax=True)
+                to_withdraw -= withdrawn
+                self._log("info", f"Withdrew {withdrawn:_} from {revenue.name} in year {year}")
+                if to_withdraw <= 0:
+                    break
+
+        return total_amount_invested
 
     def invest(self, year: int, amount: int) -> None:
         """
@@ -174,6 +204,14 @@ class FinancialModel:
         for expense in self.expenses:
             expense.grow(year)
 
+    def tax_revenues(self, year: int) -> None:
+        """
+        Subtract state and federal taxes from year's revenues.
+        """
+        for revenue in self.revenues:
+            if isinstance(revenue, TaxableIncome):
+                revenue.tax(year)
+
     def run(self, duration: Optional[int] = None) -> None:
         """
         Run the financial planning simulation.
@@ -181,6 +219,11 @@ class FinancialModel:
         self._log("info", "Starting financial planning simulation")
         for year in range(self.start_year, self.start_year + (duration or self.duration)):
             self._log("info", f"Processing year {year}")
+            # Figure out how much of the cash flow should be invested pre-tax.
+            cash_flow = self.balance_cash_flow(year)
+            self.invest_pre_tax(year, cash_flow)
+            self.tax_revenues(year)
+            # Recalculate cash flow after taxes.
             cash_flow = self.balance_cash_flow(year)
             self.distribute_cash_flow(year, cash_flow)
             self.grow_assets(year)

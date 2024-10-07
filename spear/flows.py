@@ -153,11 +153,15 @@ class TaxableIncome(InOrOutPerYear):
         if self.state not in STATE_TAX_RATES:
             raise ValueError(f"Unsupported state: {self.state}")
 
-    def tax_income(self, year: int) -> None:
+    def tax(self, year: int) -> None:
         year_index = self._convert_year_to_index(year)
         self.base_value[year_index] -= calculate_total_tax(self.base_value[year_index], self.state)
 
     def withdraw(self, year: int, amount: int, pre_tax: bool = False) -> int:
+        """
+        Withdraw amount from income.
+        Return amount withdrawn.
+        """
         year_index = self._convert_year_to_index(year)
         if pre_tax:
             self.base_value[year_index] -= amount

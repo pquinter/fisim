@@ -36,6 +36,7 @@ class Asset(InOrOutPerYear):
         growth_rate: float,
         allocation: Optional[float] = None,
         cap_value: Optional[int] = None,
+        pretax: bool = False,
         **kwargs,
     ):
         multiplier = 1 + growth_rate
@@ -45,6 +46,7 @@ class Asset(InOrOutPerYear):
         self.base_value[1:] = 0
         self.cap_value = cap_value or float("inf")
         self.allocation = allocation
+        self.pretax = pretax
 
     def withdraw(self, year: int, amount: int) -> int:
         """
