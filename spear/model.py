@@ -2,7 +2,6 @@
 Main financial model class
 """
 import logging
-from copy import deepcopy
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -120,31 +119,18 @@ class FinancialModel:
 
     def invest_pre_tax(self, year: int, amount: int) -> int:
         """
-        Invest pre-tax income into assets.
-        Return amount remaining after investment.
+        Invest into pre-tax assets.
+        Subtract amount invested from TaxableIncome.
+        Return amount invested, depending on pre-tax assets' caps.
         """
         if amount <= 0:
             return 0
 
-        # Invest in pretax assets
         pretax_assets = [asset for asset in self.assets if asset.pretax]
-        total_amount_invested = 0
-        for asset in pretax_assets:
-            amount_invested = asset.deposit(year, amount)
-            total_amount_invested += amount_invested
-            self._log("info", f"Invested in year {year}: {amount_invested:_} in {asset.name}")
-        if total_amount_invested <= 0:
-            return total_amount_invested
+        total_amount_invested = self._invest_in_assets(year, amount, pretax_assets)
 
-        # Withdraw investments from pre-tax income
-        to_withdraw = deepcopy(total_amount_invested)
-        for revenue in self.revenues:
-            if isinstance(revenue, TaxableIncome):
-                withdrawn = revenue.withdraw(year, to_withdraw, pre_tax=True)
-                to_withdraw -= withdrawn
-                self._log("info", f"Withdrew {withdrawn:_} from {revenue.name} in year {year}")
-                if to_withdraw <= 0:
-                    break
+        if total_amount_invested > 0:
+            self._withdraw_from_taxable_income(year, total_amount_invested)
 
         return total_amount_invested
 
@@ -154,17 +140,41 @@ class FinancialModel:
         """
         # First, allocate to assets with cap
         capped_assets = [asset for asset in self.assets if asset.cap_value != float("inf")]
-        for asset in capped_assets:
-            amount_invested = asset.deposit(year, amount)
-            amount -= amount_invested
-            self._log("info", f"Invested in year {year}: {amount_invested:_} in {asset.name}")
+        amount_invested = self._invest_in_assets(year, amount, capped_assets)
+        amount_remaining = amount - amount_invested
 
         # Then, allocate to assets with allocation
         allocated_assets = [asset for asset in self.assets if asset.allocation is not None]
-        allocated_amounts = [amount * asset.allocation for asset in allocated_assets]
-        for asset, allocated_amount in zip(allocated_assets, allocated_amounts):
-            amount_invested = asset.deposit(year, allocated_amount)
+        allocated_amounts = [amount_remaining * asset.allocation for asset in allocated_assets]
+        self._invest_in_assets(year, amount_remaining, allocated_assets, allocated_amounts)
+
+    def _invest_in_assets(
+        self, year: int, amount: int, assets: List[Asset], amounts: Optional[List[int]] = None
+    ) -> int:
+        """
+        Helper method to invest in a list of assets.
+        Returns the total amount invested.
+        """
+        total_invested = 0
+        for i, asset in enumerate(assets):
+            to_invest = amounts[i] if amounts else amount
+            amount_invested = asset.deposit(year, to_invest)
+            total_invested += amount_invested
             self._log("info", f"Invested in year {year}: {amount_invested:_} in {asset.name}")
+        return total_invested
+
+    def _withdraw_from_taxable_income(self, year: int, amount: int) -> None:
+        """
+        Helper method to withdraw investments from pre-tax income.
+        """
+        to_withdraw = amount
+        for revenue in self.revenues:
+            if isinstance(revenue, TaxableIncome):
+                withdrawn = revenue.withdraw(year, to_withdraw)
+                to_withdraw -= withdrawn
+                self._log("info", f"Withdrew {withdrawn:_} from {revenue.name} in year {year}")
+                if to_withdraw <= 0:
+                    break
 
     def distribute_cash_flow(self, year: int, cash_flow: int) -> None:
         """
@@ -182,7 +192,9 @@ class FinancialModel:
         Recursively withdraw funds from assets in order.
         """
         if amount <= 0 or not asset_order:
-            self._log("info", f"Adding debt for next year: {amount:_}")
+            self._log(
+                "info", f"Insufficient funds to withdraw {amount:_}. Adding debt for next year."
+            )
             self.debt.add_to_base_value(year + 1, amount)
             return
         current_asset = asset_order[0]
@@ -210,7 +222,8 @@ class FinancialModel:
         """
         for revenue in self.revenues:
             if isinstance(revenue, TaxableIncome):
-                revenue.tax(year)
+                taxed_amount = revenue.tax(year)
+                self._log("info", f"Taxed {taxed_amount:_} from {revenue.name} in year {year}")
 
     def run(self, duration: Optional[int] = None) -> None:
         """
