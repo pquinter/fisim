@@ -58,6 +58,29 @@ def sample_bond():
 
 
 @pytest.fixture
+def sample_stock_with_cap_deposit():
+    return Asset(
+        name="Test Stock with Capped Deposit",
+        initial_value=1_000,
+        start_year=2024,
+        growth_rate=0.01,
+        cap_deposit=1_000,
+    )
+
+
+@pytest.fixture
+def sample_pretax_asset_with_cap_deposit():
+    return Asset(
+        name="Test 401k",
+        initial_value=1_000,
+        start_year=2024,
+        growth_rate=0.01,
+        pretax=True,
+        cap_deposit=500,
+    )
+
+
+@pytest.fixture
 def basic_model(sample_revenue, sample_expense, sample_stock, sample_bond, sample_cash):
     return FinancialModel(
         revenues=[sample_revenue],

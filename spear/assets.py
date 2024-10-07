@@ -18,8 +18,15 @@ class Asset(InOrOutPerYear):
         The starting year for the asset.
     growth_rate : float
         Annual growth rate of the asset.
-    duration : int
-        Number of years to model.
+    allocation : Optional[float] = None
+        Allocation of the asset in the portfolio.
+        The sum of allocations across Assets passed to a FinancialModel must equal 1.
+    cap_value : Optional[int] = None
+        If asset reaches this value, no more deposits are allowed.
+    pretax : bool = False
+        Whether the asset is pretax (i.e., tax-deferred).
+    cap_deposit: Optional[int] = None
+        Maximum yearly amount to deposit into the asset.
 
     Attributes
     ----------
@@ -37,6 +44,7 @@ class Asset(InOrOutPerYear):
         allocation: Optional[float] = None,
         cap_value: Optional[int] = None,
         pretax: bool = False,
+        cap_deposit: Optional[int] = None,
         **kwargs,
     ):
         multiplier = 1 + growth_rate
@@ -45,6 +53,7 @@ class Asset(InOrOutPerYear):
         # Assets are not recurrent
         self.base_value[1:] = 0
         self.cap_value = cap_value or float("inf")
+        self.cap_deposit = cap_deposit or float("inf")
         self.allocation = allocation
         self.pretax = pretax
 
@@ -66,6 +75,6 @@ class Asset(InOrOutPerYear):
         """
         year_index = self._convert_year_to_index(year)
         space_left = max(0, self.cap_value - self.base_value[year_index])
-        deposit = min(amount, space_left)
+        deposit = min(amount, space_left, self.cap_deposit)
         self.base_value[year_index] += deposit
         return deposit

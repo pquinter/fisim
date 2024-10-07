@@ -1,6 +1,7 @@
 import pytest
 
 from spear.model import FinancialModel
+from spear.utilities import calculate_total_tax
 
 
 class TestFinancialModelBasics:
@@ -144,6 +145,39 @@ class TestRunOperations:
         # Bonds and stocks increase according to allocation, 1_000 each
         assert self.basic_model.get_asset("Test Bond").get_base_value(2024) == 2_000
         assert self.basic_model.get_asset("Test Stock").get_base_value(2024) == 2_000
+
+    def test_invest_in_pretax_asset(
+        self, sample_pretax_asset_with_cap_deposit, sample_taxable_income
+    ):
+        """Invest investing in 401k, from pretax income, with a cap on deposit amount."""
+        initial_taxable_income = sample_taxable_income.get_base_value(2024)
+        self.basic_model.revenues.append(sample_taxable_income)
+        self.basic_model.assets.append(sample_pretax_asset_with_cap_deposit)
+        to_invest = 2_500
+        invested = self.basic_model.invest_pre_tax(2024, to_invest)
+        # 401k increases by cap deposit amount, not full amount
+        assert self.basic_model.get_asset("Test 401k").get_base_value(2024) == 1_500
+        # Only taxable income is reduced by 401k deposit
+        assert sample_taxable_income.get_base_value(2024) == initial_taxable_income - invested
+        # Cash and assets are unchanged
+        assert (
+            self.basic_model.get_asset("Test Cash").get_base_value(2024) == self.initial_cash_value
+        )
+        assert (
+            self.basic_model.get_asset("Test Bond").get_base_value(2024) == self.initial_bond_value
+        )
+        assert (
+            self.basic_model.get_asset("Test Stock").get_base_value(2024)
+            == self.initial_stock_value
+        )
+
+    def test_tax_revenues(self, sample_taxable_income):
+        """Taxable income should be taxed."""
+        self.basic_model.revenues.append(sample_taxable_income)
+        self.basic_model.tax_revenues(2024)
+        assert sample_taxable_income.get_base_value(2024) == 150_000 - calculate_total_tax(
+            150_000, sample_taxable_income.state
+        )
 
 
 class TestRun:

@@ -27,3 +27,13 @@ class TestAsset:
         deposited = sample_cash.deposit(2024, 1_000)
         assert deposited == 500
         assert sample_cash.get_base_value(2024) == 1_500
+
+    def test_deposit_with_cap_deposit(self, sample_stock_with_cap_deposit):
+        deposited = sample_stock_with_cap_deposit.deposit(2024, 1_000)
+        assert deposited == 1_000
+        assert sample_stock_with_cap_deposit.get_base_value(2024) == 2_000
+
+    def test_deposit_more_than_cap_deposit(self, sample_stock_with_cap_deposit):
+        deposited = sample_stock_with_cap_deposit.deposit(2024, 2_000)
+        assert deposited == 1_000
+        assert sample_stock_with_cap_deposit.get_base_value(2024) == 2_000
