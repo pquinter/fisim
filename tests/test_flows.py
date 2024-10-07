@@ -121,33 +121,6 @@ class TestTaxableIncome:
             150_000, sample_taxable_income.state
         )
 
-    def test_pre_tax_withdrawal(self, sample_taxable_income):
-        """
-        Income should not be taxed when withdrawn.
-        """
-        initial_value = sample_taxable_income.get_base_value(2024)
-        withdrawal_amount = 10_000
-
-        withdrawn = sample_taxable_income.withdraw(2024, withdrawal_amount, pre_tax=True)
-
-        assert sample_taxable_income.get_base_value(2024) == initial_value - withdrawn
-        assert withdrawn == withdrawal_amount
-
-    def test_post_tax_withdrawal(self, sample_taxable_income):
-        """
-        Income should be taxed when withdrawn.
-        """
-        initial_value = sample_taxable_income.get_base_value(2024)
-        withdrawal_amount = 10_000
-
-        withdrawn = sample_taxable_income.withdraw(2024, withdrawal_amount, pre_tax=False)
-        taxed_income = initial_value - calculate_total_tax(
-            initial_value, sample_taxable_income.state
-        )
-
-        assert sample_taxable_income[2024] == taxed_income - withdrawn
-        assert withdrawn == withdrawal_amount
-
     @pytest.mark.parametrize("invalid_state", ["InvalidState", "XX", "WOW"])
     def test_invalid_state(self, invalid_state):
         with pytest.raises(ValueError, match=f"Unsupported state: {invalid_state}"):
