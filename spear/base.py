@@ -82,6 +82,25 @@ class InOrOutPerYear:
         year_index = self._convert_year_to_index(year)
         self.base_value[year_index] = base_value
 
+    def update(
+        self,
+        start_year: Optional[int] = None,
+        duration: Optional[int] = None,
+        **kwargs,
+    ):
+        """
+        Update class attributes if start_year is None, otherwise update base value
+        and/or multiplier for the specified year and duration.
+        """
+        if start_year is None:
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+        else:
+            year_index = self._convert_year_to_index(start_year)
+            for key, value in kwargs.items():
+                to_set = getattr(self, key)
+                to_set[year_index : year_index + (duration or 1)] = value
+
     def add_to_base_value(self, year: int, base_value: int):
         year_index = self._convert_year_to_index(year)
         self.base_value[year_index] += base_value
