@@ -192,9 +192,7 @@ class FinancialModel:
         Recursively withdraw funds from assets in order.
         """
         if amount <= 0 or not asset_order:
-            self._log(
-                "info", f"Insufficient funds to withdraw {amount:_}. Adding debt for next year."
-            )
+            self._log("info", f"Adding {amount:_} to debt for next year.")
             self.debt.add_to_base_value(year + 1, amount)
             return
         current_asset = asset_order[0]
