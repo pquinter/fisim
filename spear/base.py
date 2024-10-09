@@ -91,11 +91,11 @@ class InOrOutPerYear:
         """
         return self._get_value(year, self.multiplier)
 
-    def mutate_multiplier(self, year: int, multiplier: float):
+    def update_multiplier(self, year: int, multiplier: float):
         year_index = self._convert_year_to_index(year)
         self.multiplier[year_index] = multiplier
 
-    def mutate_base_value(self, year: int, base_value: int, duration: Optional[int] = None):
+    def update_base_value(self, year: int, base_value: int, duration: Optional[int] = None):
         year_index = self._convert_year_to_index(year)
         self.base_value[year_index : year_index + (duration or 1)] = base_value
 
