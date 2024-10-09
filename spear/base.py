@@ -66,40 +66,38 @@ class InOrOutPerYear:
     def _convert_year_to_index(self, year: int) -> int:
         return year - self.start_year
 
-    def get_base_value(self, year: int) -> int:
+    def _get_value(self, year: int, array: np.ndarray) -> int:
+        """
+        Get the value for the specified year from array.
+        Return 0 if year is outside array.
+        """
         year_index = self._convert_year_to_index(year)
-        return self.base_value[year_index]
+        try:
+            return array[year_index]
+        except IndexError:
+            return 0
+
+    def get_base_value(self, year: int) -> int:
+        """
+        Get the base value for the specified year.
+        Return 0 if year is outside the duration of the object.
+        """
+        return self._get_value(year, self.base_value)
 
     def get_multiplier(self, year: int) -> float:
-        year_index = self._convert_year_to_index(year)
-        return self.multiplier[year_index]
+        """
+        Get the multiplier for the specified year.
+        Return 0 if year is outside the duration of the object.
+        """
+        return self._get_value(year, self.multiplier)
 
-    def mutate_multiplier(self, year: int, multiplier: float):
+    def update_multiplier(self, year: int, multiplier: float):
         year_index = self._convert_year_to_index(year)
         self.multiplier[year_index] = multiplier
 
-    def mutate_base_value(self, year: int, base_value: int):
+    def update_base_value(self, year: int, base_value: int, duration: Optional[int] = None):
         year_index = self._convert_year_to_index(year)
-        self.base_value[year_index] = base_value
-
-    def update(
-        self,
-        start_year: Optional[int] = None,
-        duration: Optional[int] = None,
-        **kwargs,
-    ):
-        """
-        Update class attributes if start_year is None, otherwise update base value
-        and/or multiplier for the specified year and duration.
-        """
-        if start_year is None:
-            for key, value in kwargs.items():
-                setattr(self, key, value)
-        else:
-            year_index = self._convert_year_to_index(start_year)
-            for key, value in kwargs.items():
-                to_set = getattr(self, key)
-                to_set[year_index : year_index + (duration or 1)] = value
+        self.base_value[year_index : year_index + (duration or 1)] = base_value
 
     def add_to_base_value(self, year: int, base_value: int):
         year_index = self._convert_year_to_index(year)
