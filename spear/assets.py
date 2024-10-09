@@ -78,3 +78,6 @@ class Asset(InOrOutPerYear):
         deposit = min(amount, space_left, self.cap_deposit)
         self.base_value[year_index] += deposit
         return deposit
+
+    def update_cap_deposit(self, cap_deposit: int):
+        self.cap_deposit = cap_deposit
