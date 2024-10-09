@@ -101,7 +101,7 @@ class FinancialModel:
                 start_year = event.start_year
                 end_year = start_year + event.duration
                 for y in range(start_year, end_year):
-                    affected_io.mutate_multiplier(y, event.multiplier)
+                    affected_io.update_multiplier(y, event.multiplier)
 
     def balance_cash_flow(self, year: int) -> int:
         """
