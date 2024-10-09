@@ -95,35 +95,37 @@ def basic_model(sample_revenue, sample_expense, sample_stock, sample_bond, sampl
 def sample_action_update_taxable_income(sample_taxable_income):
     return Action(
         target=sample_taxable_income,
-        action="update",
-        params={"base_value": 0, "start_year": 2030, "duration": 100},
+        action="update_base_value",
+        params={"base_value": 0, "duration": 100},
     )
 
 
 @pytest.fixture
 def sample_action_change_cap_deposit(sample_pretax_asset_with_cap_deposit):
     return Action(
-        target=sample_pretax_asset_with_cap_deposit, action="update", params={"cap_deposit": 0}
+        target=sample_pretax_asset_with_cap_deposit,
+        action="update_cap_deposit",
+        params={"cap_deposit": 0},
     )
 
 
 @pytest.fixture
 def sample_action_withdraw_cash(sample_cash):
-    return Action(target=sample_cash, action="withdraw", params={"amount": 505, "year": 2024})
+    return Action(target=sample_cash, action="withdraw", params={"amount": 505})
 
 
 @pytest.fixture
 def sample_event_stop_taxable_income(sample_action_update_taxable_income):
-    return Event(name="Retirement", start_year=2030, actions=[sample_action_update_taxable_income])
+    return Event(name="Retirement", year=2030, actions=[sample_action_update_taxable_income])
 
 
 @pytest.fixture
 def sample_event_stop_investing_in_401k(sample_action_change_cap_deposit):
     return Event(
-        name="Stop Investing in 401k", start_year=2026, actions=[sample_action_change_cap_deposit]
+        name="Stop Investing in 401k", year=2026, actions=[sample_action_change_cap_deposit]
     )
 
 
 @pytest.fixture
 def sample_event_buy_house(sample_action_withdraw_cash):
-    return Event(name="Buy House", start_year=2024, actions=[sample_action_withdraw_cash])
+    return Event(name="Buy House", year=2024, actions=[sample_action_withdraw_cash])

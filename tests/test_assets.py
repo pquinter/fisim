@@ -13,7 +13,7 @@ class TestAsset:
         assert sample_cash.get_base_value(2024) == 0
 
     def test_withdraw_from_year_with_zero_balance(self, sample_cash):
-        sample_cash.mutate_base_value(2024, 0)
+        sample_cash.update_base_value(2024, 0)
         withdrawn = sample_cash.withdraw(2024, 1_000)
         assert withdrawn == 0
         assert sample_cash.get_base_value(2024) == 0
