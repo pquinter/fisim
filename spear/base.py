@@ -91,11 +91,11 @@ class InOrOutPerYear:
         """
         return self._get_value(year, self.multiplier)
 
-    def update_multiplier(self, year: int, multiplier: float):
+    def mutate_multiplier(self, year: int, multiplier: float):
         year_index = self._convert_year_to_index(year)
         self.multiplier[year_index] = multiplier
 
-    def update_base_value(self, year: int, base_value: int, duration: Optional[int] = None):
+    def mutate_base_value(self, year: int, base_value: int, duration: Optional[int] = None):
         year_index = self._convert_year_to_index(year)
         self.base_value[year_index : year_index + (duration or 1)] = base_value
 
@@ -103,13 +103,20 @@ class InOrOutPerYear:
         year_index = self._convert_year_to_index(year)
         self.base_value[year_index] += base_value
 
-    def plot(
-        self, duration: Optional[int] = None, ax: Optional[plt.Axes] = None, **kwargs
+    def _plot(
+        self,
+        duration: Optional[int] = None,
+        ax: Optional[plt.Axes] = None,
+        array: np.ndarray = None,
+        **kwargs,
     ) -> plt.Axes:
+        """
+        Plot base value or multiplier over time.
+        """
         ax = ax or plt.gca()
         ax.plot(
             range(self.start_year, self.start_year + (duration or self.duration)),
-            self.base_value[: duration or self.duration],
+            array[: duration or self.duration],
             label=self.name,
             **kwargs,
         )
@@ -119,11 +126,29 @@ class InOrOutPerYear:
             xticks=range(self.start_year, self.start_year + (duration or self.duration)),
         )
         ax.tick_params(axis="x", rotation=60)
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+        return ax
+
+    def plot(
+        self, duration: Optional[int] = None, ax: Optional[plt.Axes] = None, **kwargs
+    ) -> plt.Axes:
+        """
+        Plot base values over time.
+        """
+        ax = self._plot(duration, ax, self.base_value, **kwargs)
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda x, p: f"{x/1e3:.0f}K" if x < 1e6 else f"{x/1e6:.1f}M")
         )
-        ax.legend()
-        ax.grid(True, alpha=0.3)
+        return ax
+
+    def plot_multipliers(
+        self, duration: Optional[int] = None, ax: Optional[plt.Axes] = None, **kwargs
+    ) -> plt.Axes:
+        """
+        Plot multipliers over time.
+        """
+        ax = self._plot(duration, ax, self.multiplier, **kwargs)
         return ax
 
     def __getitem__(self, year: int) -> int:

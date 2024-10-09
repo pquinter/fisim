@@ -3,6 +3,9 @@ Asset class for financial planning model
 """
 from typing import Optional
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 from .flows import InOrOutPerYear
 
 
@@ -45,10 +48,12 @@ class Asset(InOrOutPerYear):
         cap_value: Optional[int] = None,
         pretax: bool = False,
         cap_deposit: Optional[int] = None,
+        monte_carlo: bool = False,
+        seed: Optional[int] = None,
         **kwargs,
     ):
-        multiplier = 1 + growth_rate
-        kwargs["multiplier"] = multiplier
+        self.growth_rate = growth_rate
+        kwargs["multiplier"] = 1 + self.growth_rate
         super().__init__(**kwargs)
         # Assets are not recurrent
         self.base_value[1:] = 0
@@ -56,6 +61,14 @@ class Asset(InOrOutPerYear):
         self.cap_deposit = cap_deposit or float("inf")
         self.allocation = allocation
         self.pretax = pretax
+        self.seed = seed
+        if monte_carlo:
+            self._sample_growth_rates()
+
+    def _sample_growth_rates(self):
+        rng = np.random.default_rng(seed=self.seed)
+        self.multiplier = rng.normal(loc=self.growth_rate, scale=0.1, size=self.duration)
+        self.multiplier += 1
 
     def withdraw(self, year: int, amount: int) -> int:
         """
@@ -81,3 +94,13 @@ class Asset(InOrOutPerYear):
 
     def update_cap_deposit(self, cap_deposit: int):
         self.cap_deposit = cap_deposit
+
+    def plot_growth_rates(
+        self, duration: Optional[int] = None, ax: Optional[plt.Axes] = None, **kwargs
+    ) -> plt.Axes:
+        """
+        Plot growth rates over time.
+        """
+        growth_rates = self.multiplier - 1
+        ax = self._plot(duration, ax, growth_rates, **kwargs)
+        return ax
