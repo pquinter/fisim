@@ -3,7 +3,7 @@ Main financial model class
 """
 import logging
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -61,7 +61,7 @@ class FinancialModel:
         """
         Get all financial planning moneys.
         """
-        return self.revenues + self.expenses + self.assets + self.events
+        return self.revenues + self.expenses + self.assets
 
     def _enable_logging(self):
         """
@@ -90,18 +90,14 @@ class FinancialModel:
         """
         Get events for a given year.
         """
-        events = [event for event in self.events if event.start_year == year]
+        events = [event for event in self.events if event.year == year]
         self._log("debug", f"Events for year {year}: {events}")
         return events
 
     def apply_events(self, year: int) -> None:
         for event in self.get_events(year):
             self._log("info", f"Applying event in year {year}: {event}")
-            for affected_io in event.affected_ios:
-                start_year = event.start_year
-                end_year = start_year + event.duration
-                for y in range(start_year, end_year):
-                    affected_io.update_multiplier(y, event.multiplier)
+            event.apply()
 
     def balance_cash_flow(self, year: int) -> int:
         """
@@ -230,7 +226,9 @@ class FinancialModel:
         self._log("info", "Starting financial planning simulation")
         for year in range(self.start_year, self.start_year + (duration or self.duration)):
             self._log("info", f"Processing year {year}")
-            # Figure out how much of the cash flow should be invested pre-tax.
+            self.apply_events(year)
+            # Figure out how much cash to invest pre-tax.
+            # TODO: probably there is a more accurate way to do this.
             cash_flow = self.balance_cash_flow(year)
             self.invest_pre_tax(year, cash_flow)
             self.tax_revenues(year)
@@ -241,7 +239,9 @@ class FinancialModel:
             self.add_inflation(year)
         self._log("info", "Financial planning simulation completed")
 
-    def _plot_values(self, values: List[InOrOutPerYear], ax: Optional[plt.Axes] = None) -> plt.Axes:
+    def _plot_values(
+        self, values: List[Union[InOrOutPerYear, Event]], ax: Optional[plt.Axes] = None
+    ) -> plt.Axes:
         """
         Plot values from InOrOutPerYears or its subclasses over financial planning duration.
         """
@@ -262,12 +262,22 @@ class FinancialModel:
         """
         return self._plot_values(self.expenses + self.revenues + [self.debt], ax)  # type: ignore
 
+    def plot_events(self, ax: Optional[plt.Axes] = None) -> plt.Axes:
+        """
+        Plot events as vertical lines.
+        """
+        ax = ax or plt.gca()
+        for event in self.events:
+            event.plot(ax=ax)
+        return ax
+
     def plot_all(self, ax: Optional[plt.Axes] = None) -> plt.Axes:
         """
         Plot all values over financial planning duration.
         """
         ax = self.plot_assets(ax)
         self.plot_cash_flow(ax)
+        self.plot_events(ax)
         return ax
 
     def _get_money_by_name(

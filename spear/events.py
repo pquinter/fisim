@@ -3,7 +3,9 @@ Event class for financial planning model
 """
 import inspect
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+
+import matplotlib.pyplot as plt
 
 from .flows import InOrOutPerYear
 
@@ -29,6 +31,10 @@ class Action:
 
     def __post_init__(self):
         self.validate()
+
+    def __str__(self) -> str:
+        """Return the Action's target name."""
+        return f"{self.target.__class__.__name__}.{self.action}"
 
     def _mock_call_action_with_params(self):
         """Mock calling the action with the provided parameters."""
@@ -95,7 +101,21 @@ class Event:
             if "year" in inspect.signature(target_action).parameters:
                 action.params["year"] = self.year
 
+    def __str__(self) -> str:
+        """Return a string representation of the Event."""
+        return (
+            f"{self.name} (Year: {self.year}"
+            + f", Actions: {', '.join(str(action) for action in self.actions)})"
+        )
+
     def apply(self):
         """Apply the event's actions."""
         for action in self.actions:
             action.apply()
+
+    def plot(self, ax: Optional[plt.Axes] = None, **kwargs) -> plt.Axes:
+        """Plot event's year as a vertical line."""
+        ax = ax or plt.gca()
+        ax.axvline(x=self.year, linestyle="--", alpha=0.7, label=self.name, **kwargs)
+        ax.legend()
+        return ax
