@@ -129,3 +129,19 @@ def sample_event_stop_investing_in_401k(sample_action_change_cap_deposit):
 @pytest.fixture
 def sample_event_buy_house(sample_action_withdraw_cash):
     return Event(name="Buy House", year=2024, actions=[sample_action_withdraw_cash])
+
+
+@pytest.fixture
+def model_with_events(
+    basic_model,
+    sample_event_stop_investing_in_401k,
+    sample_event_stop_taxable_income,
+    sample_event_buy_house,
+):
+    model = basic_model
+    model.events = [
+        sample_event_stop_investing_in_401k,
+        sample_event_stop_taxable_income,
+        sample_event_buy_house,
+    ]
+    return model

@@ -228,6 +228,42 @@ class TestRun:
         ), f"Expected call order {expected_call_order}, but got {call_order}"
 
 
-class TestApplyEvents:
-    def test_apply_events(self):
-        pass
+class TestModelEvents:
+    def test_get_events(self, model_with_events):
+        for year in (2024, 2026, 2030):
+            events = model_with_events.get_events(year)
+            assert len(events) == 1
+            assert events[0].year == year
+
+    def test_apply_events(
+        self,
+        model_with_events,
+        sample_cash,
+        sample_pretax_asset_with_cap_deposit,
+        sample_taxable_income,
+    ):
+        """Applying events from model should modify target"""
+        # Withdraw 505 from cash in 2024
+        model_with_events.apply_events(2024)
+        assert sample_cash.get_base_value(2024) == 495
+        # Change cap deposit to 0 in 2026
+        model_with_events.apply_events(2026)
+        assert sample_pretax_asset_with_cap_deposit.cap_deposit == 0
+        # Stop taxable income in 2030 onwards
+        model_with_events.apply_events(2030)
+        for year in range(2030, model_with_events.duration):
+            assert sample_taxable_income.get_base_value(year) == 0
+
+    def test_apply_events_in_run(
+        self,
+        model_with_events,
+        sample_cash,
+        sample_pretax_asset_with_cap_deposit,
+        sample_taxable_income,
+    ):
+        """model.run() should apply events."""
+        model_with_events.run()
+        assert sample_cash.get_base_value(2024) == 495
+        assert sample_pretax_asset_with_cap_deposit.cap_deposit == 0
+        for year in range(2030, model_with_events.duration):
+            assert sample_taxable_income.get_base_value(year) == 0
