@@ -50,6 +50,7 @@ class Asset(InOrOutPerYear):
         cap_deposit: Optional[int] = None,
         monte_carlo: bool = False,
         seed: Optional[int] = None,
+        scale: float = 0.05,
         **kwargs,
     ):
         self.growth_rate = growth_rate
@@ -62,12 +63,13 @@ class Asset(InOrOutPerYear):
         self.allocation = allocation
         self.pretax = pretax
         self.seed = seed
+        self.scale = scale
         if monte_carlo:
             self._sample_growth_rates()
 
     def _sample_growth_rates(self):
         rng = np.random.default_rng(seed=self.seed)
-        self.multiplier = rng.normal(loc=self.growth_rate, scale=0.1, size=self.duration)
+        self.multiplier = rng.normal(loc=self.growth_rate, scale=self.scale, size=self.duration)
         self.multiplier += 1
 
     def withdraw(self, year: int, amount: int) -> int:
