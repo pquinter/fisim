@@ -99,9 +99,9 @@ class InOrOutPerYear:
         year_index = self._convert_year_to_index(year)
         self.base_value[year_index : year_index + (duration or 1)] = base_value
 
-    def add_to_base_value(self, year: int, base_value: int):
+    def add_to_base_value(self, year: int, base_value: int, duration: Optional[int] = None):
         year_index = self._convert_year_to_index(year)
-        self.base_value[year_index] += base_value
+        self.base_value[year_index : year_index + (duration or 1)] += base_value
 
     def _plot(
         self,
