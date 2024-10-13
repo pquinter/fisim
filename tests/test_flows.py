@@ -9,10 +9,10 @@ class TestExpense:
         for year in range(2024, 2027):
             sample_expense.grow(year)
 
-        assert sample_expense.get_base_value(2024) == 1_000
-        assert sample_expense.get_base_value(2025) == 1_020
-        assert abs(sample_expense.get_base_value(2026) - int(1_000 * (1.02**2))) <= 1
-        assert abs(sample_expense.get_base_value(2027) - int(1_000 * (1.02**3))) <= 1
+        assert sample_expense.get_base_values(2024) == 1_000
+        assert sample_expense.get_base_values(2025) == 1_020
+        assert abs(sample_expense.get_base_values(2026) - int(1_000 * (1.02**2))) <= 1
+        assert abs(sample_expense.get_base_values(2027) - int(1_000 * (1.02**3))) <= 1
 
 
 class TestTaxableIncome:

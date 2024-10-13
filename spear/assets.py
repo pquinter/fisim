@@ -48,50 +48,52 @@ class Asset(InOrOutPerYear):
         cap_value: Optional[int] = None,
         pretax: bool = False,
         cap_deposit: Optional[int] = None,
-        monte_carlo: bool = False,
+        sample_growth_rates: bool = False,
         seed: Optional[int] = None,
         scale: float = 0.05,
         **kwargs,
     ):
         self.growth_rate = growth_rate
-        kwargs["multiplier"] = 1 + self.growth_rate
-        super().__init__(**kwargs)
-        # Assets are not recurrent
-        self.base_value[1:] = 0
+        self.allocation = allocation
         self.cap_value = cap_value or float("inf")
         self.cap_deposit = cap_deposit or float("inf")
-        self.allocation = allocation
         self.pretax = pretax
         self.seed = seed
         self.scale = scale
-        if monte_carlo:
+        self.sample_growth_rates = sample_growth_rates
+        kwargs["multiplier"] = 1 + self.growth_rate
+        super().__init__(**kwargs)
+        # Assets are not recurrent
+        self.base_values[:, 1:] = 0
+        if self.sample_growth_rates:
             self._sample_growth_rates()
 
     def _sample_growth_rates(self):
         rng = np.random.default_rng(seed=self.seed)
-        self.multiplier = rng.normal(loc=self.growth_rate, scale=self.scale, size=self.duration)
-        self.multiplier += 1
+        self.multipliers = rng.normal(
+            loc=1 + self.growth_rate,
+            scale=self.scale,
+            size=(self.number_of_simulations, self.duration),
+        )
 
-    def withdraw(self, year: int, amount: int) -> int:
+    def prepare_simulations(self, number_of_simulations: int):
         """
-        Withdraw an amount from the asset for a given year.
-        Returns the amount actually withdrawn, based on available funds.
+        Expand base_values and multipliers to hold multiple simulations,
+        and sample growth rates for each.
         """
-        year_index = self._convert_year_to_index(year)
-        available = self.base_value[year_index]
-        withdrawn = min(amount, available)
-        self.base_value[year_index] -= withdrawn
-        return withdrawn
+        super().prepare_simulations(number_of_simulations)
+        if self.sample_growth_rates:
+            self._sample_growth_rates()
 
-    def deposit(self, year: int, amount: int) -> int:
+    def deposit(self, year: int, amount: np.ndarray) -> np.ndarray:
         """
         Deposit an optionally capped amount into the asset for a given year.
         Returns the amount actually deposited.
         """
-        year_index = self._convert_year_to_index(year)
-        space_left = max(0, self.cap_value - self.base_value[year_index])
-        deposit = min(amount, space_left, self.cap_deposit)
-        self.base_value[year_index] += deposit
+        available = self.get_base_values(year)
+        space_left = np.maximum(0, self.cap_value - available)
+        deposit = np.minimum(amount, np.minimum(space_left, self.cap_deposit))
+        self.update_base_values(year, available + deposit)
         return deposit
 
     def update_cap_deposit(self, cap_deposit: int):

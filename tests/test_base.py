@@ -6,29 +6,33 @@ from spear.base import InOrOutPerYear
 
 class TestInOrOutPerYear:
     def test_initialization(self, sample_revenue):
-        assert len(sample_revenue.base_value) == 10
-        assert len(sample_revenue.multiplier) == 10
+        assert sample_revenue.base_values.shape == (1, 10)
+        assert sample_revenue.multipliers.shape == (1, 10)
 
-    def test_get_base_value(self, sample_revenue):
-        assert sample_revenue.get_base_value(2024) == 1_000
+    def test_prepare_simulations(self, sample_revenue):
+        sample_revenue.prepare_simulations(10_000)
+        assert sample_revenue.base_values.shape == (10_000, 10)
 
-    def test_get_multiplier(self, sample_revenue):
-        assert sample_revenue.get_multiplier(2024) == 1
+    def test_get_base_values(self, sample_revenue):
+        assert sample_revenue.get_base_values(2024) == 1_000
 
-    def test_update_multiplier(self, sample_revenue):
-        sample_revenue.update_multiplier(2025, 1.1)
-        assert sample_revenue.get_multiplier(2025) == 1.1
-        assert sample_revenue.get_multiplier(2024) == 1
+    def test_get_multipliers(self, sample_revenue):
+        assert sample_revenue.get_multipliers(2024) == 1
 
-    def test_update_base_value(self, sample_revenue):
-        sample_revenue.update_base_value(2025, 100)
-        assert sample_revenue.get_base_value(2025) == 100
-        assert sample_revenue.get_base_value(2024) == 1_000
+    def test_update_multipliers(self, sample_revenue):
+        sample_revenue.update_multipliers(2025, 1.1)
+        assert sample_revenue.get_multipliers(2025) == 1.1
+        assert sample_revenue.get_multipliers(2024) == 1
 
-    def test_add_to_base_value(self, sample_revenue):
-        sample_revenue.add_to_base_value(2024, 500)
-        assert sample_revenue.get_base_value(2024) == 1_500
-        assert sample_revenue.get_base_value(2025) == 1_000
+    def test_update_base_values(self, sample_revenue):
+        sample_revenue.update_base_values(2025, 100)
+        assert sample_revenue.get_base_values(2025) == 100
+        assert sample_revenue.get_base_values(2024) == 1_000
+
+    def test_add_to_base_values(self, sample_revenue):
+        sample_revenue.add_to_base_values(2024, 500)
+        assert sample_revenue.get_base_values(2024) == 1_500
+        assert sample_revenue.get_base_values(2025) == 1_000
 
     def test_getitem(self, sample_revenue):
         assert sample_revenue[2024] == 1_000
@@ -66,40 +70,59 @@ class TestInOrOutPerYear:
         plt.close(ax.figure)
 
     def test_grow_one_year(self, sample_revenue):
-        initial_value = sample_revenue.get_base_value(2024)
+        initial_value = sample_revenue.get_base_values(2024)
         sample_revenue.grow(2024)
 
         # Check that the value for 2024 hasn't changed
-        assert sample_revenue.get_base_value(2024) == initial_value
+        assert sample_revenue.get_base_values(2024) == initial_value
 
         # Check that the value for 2025 has grown by the multiplier
-        expected_value = int(initial_value * sample_revenue.get_multiplier(2024))
-        assert sample_revenue.get_base_value(2025) == expected_value
+        expected_value = int(initial_value * sample_revenue.get_multipliers(2024))
+        assert sample_revenue.get_base_values(2025) == expected_value
 
         # Check that subsequent years haven't changed
-        assert sample_revenue.get_base_value(2026) == initial_value
+        assert sample_revenue.get_base_values(2026) == initial_value
 
     def test_grow_over_multiple_years(self, sample_revenue):
-        initial_value = sample_revenue.get_base_value(2024)
+        initial_value = sample_revenue.get_base_values(2024)
         expected_value = initial_value
 
         for year in range(2024, 2027):
-            assert sample_revenue.get_base_value(year) == expected_value
+            assert sample_revenue.get_base_values(year) == expected_value
             sample_revenue.grow(year)
-            expected_value = int(expected_value * sample_revenue.get_multiplier(year))
+            expected_value = int(expected_value * sample_revenue.get_multipliers(year))
 
         # Check the final year after growth
-        assert sample_revenue.get_base_value(2027) == expected_value
+        assert sample_revenue.get_base_values(2027) == expected_value
 
     def test_grow_at_end_of_duration(self, sample_revenue):
         last_year = sample_revenue.start_year + sample_revenue.duration - 1
-        initial_value = sample_revenue.get_base_value(last_year)
+        initial_value = sample_revenue.get_base_values(last_year)
 
         # Growing at the last year should not raise an error
         sample_revenue.grow(last_year)
 
         # The value for the last year should remain unchanged
-        assert sample_revenue.get_base_value(last_year) == initial_value
+        assert sample_revenue.get_base_values(last_year) == initial_value
 
     def test_get_value_outside_duration_returns_zero(self, sample_revenue):
-        assert sample_revenue._get_value(2500, sample_revenue.base_value) == 0
+        assert sample_revenue.get_base_values(2500) == 0
+        assert sample_revenue.get_multipliers(2500) == 0
+
+
+class TestWithdraw:
+    def test_withdraw_less_than_available(self, sample_cash):
+        withdrawn = sample_cash.withdraw(2024, 300)
+        assert withdrawn == 300
+        assert sample_cash.get_base_values(2024) == 700
+
+    def test_withdraw_more_than_available(self, sample_cash):
+        withdrawn = sample_cash.withdraw(2024, 2_000)
+        assert withdrawn == 1_000
+        assert sample_cash.get_base_values(2024) == 0
+
+    def test_withdraw_from_year_with_zero_balance(self, sample_cash):
+        sample_cash.update_base_values(2024, 0)
+        withdrawn = sample_cash.withdraw(2024, 1_000)
+        assert withdrawn == 0
+        assert sample_cash.get_base_values(2024) == 0

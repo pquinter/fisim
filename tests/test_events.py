@@ -34,8 +34,8 @@ class TestEvent:
         year = action.params["year"]
         duration = action.params["duration"]
         sample_event_stop_taxable_income.apply()
-        for y in range(year, min(year + duration, len(sample_taxable_income.base_value))):
-            assert sample_taxable_income.get_base_value(y) == 0
+        for y in range(year, min(year + duration, len(sample_taxable_income.base_values))):
+            assert sample_taxable_income.get_base_values(y) == 0
 
     def test_event_stop_investing_in_401k(
         self, sample_event_stop_investing_in_401k, sample_pretax_asset_with_cap_deposit
@@ -48,4 +48,4 @@ class TestEvent:
         """Withdraws from cash asset to buy a house."""
         year = sample_event_buy_house.year
         sample_event_buy_house.apply()
-        assert sample_cash.get_base_value(year) == 495
+        assert sample_cash.get_base_values(year) == 495

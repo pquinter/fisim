@@ -2,6 +2,9 @@
 Cash flow classes for financial planning model
 """
 
+
+import numpy as np
+
 from spear.base import InOrOutPerYear
 from spear.constants import STATE_TAX_RATES
 from spear.utilities import calculate_total_tax
@@ -32,23 +35,12 @@ class TaxableIncome(InOrOutPerYear):
         if self.state not in STATE_TAX_RATES:
             raise ValueError(f"Unsupported state: {self.state}")
 
-    def tax(self, year: int) -> int:
+    def tax(self, year: int) -> np.ndarray:
         """
         Subtract state and federal taxes from year's income.
         Return amount taxed.
         """
-        year_index = self._convert_year_to_index(year)
-        tax_amount = calculate_total_tax(self.base_value[year_index], self.state)
-        self.base_value[year_index] -= tax_amount
+        income = self.get_base_values(year)
+        tax_amount = calculate_total_tax(income, self.state)
+        self.update_base_values(year, income - tax_amount)
         return tax_amount
-
-    def withdraw(self, year: int, amount: int) -> int:
-        """
-        Withdraw amount from income.
-        Return amount withdrawn, depending on available funds.
-        """
-        year_index = self._convert_year_to_index(year)
-        available_amount = self.base_value[year_index]
-        amount_withdrawn = min(available_amount, amount)
-        self.base_value[year_index] -= amount_withdrawn
-        return amount_withdrawn

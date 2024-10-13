@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 
 from spear.model import FinancialModel
@@ -41,9 +43,15 @@ class TestRunOperations:
     @pytest.fixture(autouse=True)
     def setup(self, basic_model):
         self.basic_model = basic_model
-        self.initial_cash_value = self.basic_model.get_asset("Test Cash").get_base_value(2024)
-        self.initial_bond_value = self.basic_model.get_asset("Test Bond").get_base_value(2024)
-        self.initial_stock_value = self.basic_model.get_asset("Test Stock").get_base_value(2024)
+        self.initial_cash_value = copy.deepcopy(
+            self.basic_model.get_asset("Test Cash").get_base_values(2024)
+        )
+        self.initial_bond_value = copy.deepcopy(
+            self.basic_model.get_asset("Test Bond").get_base_values(2024)
+        )
+        self.initial_stock_value = copy.deepcopy(
+            self.basic_model.get_asset("Test Stock").get_base_values(2024)
+        )
 
     def test_balance_cash_flow(self):
         """No cash flow in 2024 because revenues equal expenses."""
@@ -64,15 +72,15 @@ class TestRunOperations:
         to_withdraw = 1_000
         self.basic_model.withdraw_funds(2024, to_withdraw, self.basic_model.assets)
         assert (
-            self.basic_model.get_asset("Test Cash").get_base_value(2024)
+            self.basic_model.get_asset("Test Cash").get_base_values(2024)
             == self.initial_cash_value - to_withdraw
         )
         # Stocks and bonds are unchanged
         assert (
-            self.basic_model.get_asset("Test Bond").get_base_value(2024) == self.initial_bond_value
+            self.basic_model.get_asset("Test Bond").get_base_values(2024) == self.initial_bond_value
         )
         assert (
-            self.basic_model.get_asset("Test Stock").get_base_value(2024)
+            self.basic_model.get_asset("Test Stock").get_base_values(2024)
             == self.initial_stock_value
         )
 
@@ -81,14 +89,14 @@ class TestRunOperations:
         to_withdraw = 1_500
         self.basic_model.withdraw_funds(2024, to_withdraw, self.basic_model.assets)
         # Cash is depleted
-        assert self.basic_model.get_asset("Test Cash").get_base_value(2024) == 0
+        assert self.basic_model.get_asset("Test Cash").get_base_values(2024) == 0
         # Bonds are depleted by the amount withdrawn minus the initial cash value
-        assert self.basic_model.get_asset("Test Bond").get_base_value(
+        assert self.basic_model.get_asset("Test Bond").get_base_values(
             2024
         ) == self.initial_bond_value - (to_withdraw - self.initial_cash_value)
         # Stocks are unchanged
         assert (
-            self.basic_model.get_asset("Test Stock").get_base_value(2024)
+            self.basic_model.get_asset("Test Stock").get_base_values(2024)
             == self.initial_stock_value
         )
 
@@ -97,11 +105,11 @@ class TestRunOperations:
         to_withdraw = 2_500
         self.basic_model.withdraw_funds(2024, to_withdraw, self.basic_model.assets)
         # Cash is depleted
-        assert self.basic_model.get_asset("Test Cash").get_base_value(2024) == 0
+        assert self.basic_model.get_asset("Test Cash").get_base_values(2024) == 0
         # Bonds are depleted
-        assert self.basic_model.get_asset("Test Bond").get_base_value(2024) == 0
+        assert self.basic_model.get_asset("Test Bond").get_base_values(2024) == 0
         # Stocks are depleted by the amount withdrawn minus the initial cash and bond values
-        assert self.basic_model.get_asset("Test Stock").get_base_value(
+        assert self.basic_model.get_asset("Test Stock").get_base_values(
             2024
         ) == self.initial_stock_value - (
             to_withdraw - self.initial_cash_value - self.initial_bond_value
@@ -112,10 +120,10 @@ class TestRunOperations:
         to_withdraw = 4_000
         self.basic_model.withdraw_funds(2024, to_withdraw, self.basic_model.assets)
         # Debt is added for the deficit
-        assert self.basic_model.debt.get_base_value(2025) == 1_000
+        assert self.basic_model.debt.get_base_values(2025) == 1_000
         # Withdrawing again should just debt
         self.basic_model.withdraw_funds(2024, to_withdraw, self.basic_model.assets)
-        assert self.basic_model.debt.get_base_value(2025) == 5_000
+        assert self.basic_model.debt.get_base_values(2025) == 5_000
 
     def test_invest_in_capped_cash(self):
         """Invest money only sufficient to impact capped assets."""
@@ -123,15 +131,15 @@ class TestRunOperations:
         self.basic_model.invest(2024, to_invest)
         # Cash increases
         assert (
-            self.basic_model.get_asset("Test Cash").get_base_value(2024)
+            self.basic_model.get_asset("Test Cash").get_base_values(2024)
             == self.initial_cash_value + to_invest
         )
         # But bonds and stocks are unchanged
         assert (
-            self.basic_model.get_asset("Test Bond").get_base_value(2024) == self.initial_bond_value
+            self.basic_model.get_asset("Test Bond").get_base_values(2024) == self.initial_bond_value
         )
         assert (
-            self.basic_model.get_asset("Test Stock").get_base_value(2024)
+            self.basic_model.get_asset("Test Stock").get_base_values(2024)
             == self.initial_stock_value
         )
 
@@ -141,33 +149,33 @@ class TestRunOperations:
         to_invest = 2_500
         self.basic_model.invest(2024, to_invest)
         # Cash increases
-        assert self.basic_model.get_asset("Test Cash").get_base_value(2024) == 1_500
+        assert self.basic_model.get_asset("Test Cash").get_base_values(2024) == 1_500
         # Bonds and stocks increase according to allocation, 1_000 each
-        assert self.basic_model.get_asset("Test Bond").get_base_value(2024) == 2_000
-        assert self.basic_model.get_asset("Test Stock").get_base_value(2024) == 2_000
+        assert self.basic_model.get_asset("Test Bond").get_base_values(2024) == 2_000
+        assert self.basic_model.get_asset("Test Stock").get_base_values(2024) == 2_000
 
     def test_invest_in_pretax_asset(
         self, sample_pretax_asset_with_cap_deposit, sample_taxable_income
     ):
         """Invest investing in 401k, from pretax income, with a cap on deposit amount."""
-        initial_taxable_income = sample_taxable_income.get_base_value(2024)
+        initial_taxable_income = sample_taxable_income.get_base_values(2024)
         self.basic_model.revenues.append(sample_taxable_income)
         self.basic_model.assets.append(sample_pretax_asset_with_cap_deposit)
         to_invest = 2_500
         invested = self.basic_model.invest_pre_tax(2024, to_invest)
         # 401k increases by cap deposit amount, not full amount
-        assert self.basic_model.get_asset("Test 401k").get_base_value(2024) == 1_500
+        assert self.basic_model.get_asset("Test 401k").get_base_values(2024) == 1_500
         # Only taxable income is reduced by 401k deposit
-        assert sample_taxable_income.get_base_value(2024) == initial_taxable_income - invested
+        assert sample_taxable_income.get_base_values(2024) == initial_taxable_income - invested
         # Cash and assets are unchanged
         assert (
-            self.basic_model.get_asset("Test Cash").get_base_value(2024) == self.initial_cash_value
+            self.basic_model.get_asset("Test Cash").get_base_values(2024) == self.initial_cash_value
         )
         assert (
-            self.basic_model.get_asset("Test Bond").get_base_value(2024) == self.initial_bond_value
+            self.basic_model.get_asset("Test Bond").get_base_values(2024) == self.initial_bond_value
         )
         assert (
-            self.basic_model.get_asset("Test Stock").get_base_value(2024)
+            self.basic_model.get_asset("Test Stock").get_base_values(2024)
             == self.initial_stock_value
         )
 
@@ -175,7 +183,7 @@ class TestRunOperations:
         """Taxable income should be taxed."""
         self.basic_model.revenues.append(sample_taxable_income)
         self.basic_model.tax_revenues(2024)
-        assert sample_taxable_income.get_base_value(2024) == 150_000 - calculate_total_tax(
+        assert sample_taxable_income.get_base_values(2024) == 150_000 - calculate_total_tax(
             150_000, sample_taxable_income.state
         )
 
@@ -227,6 +235,14 @@ class TestRun:
             call_order == expected_call_order
         ), f"Expected call order {expected_call_order}, but got {call_order}"
 
+    def test_invest_tax_with_negative_amount(
+        self, basic_model, sample_pretax_asset_with_cap_deposit
+    ):
+        """Investing negative amounts should not change the asset value."""
+        basic_model.assets.append(sample_pretax_asset_with_cap_deposit)
+        basic_model.invest_pre_tax(2024, -1_000)
+        assert basic_model.get_asset("Test 401k").get_base_values(2024) == 1_000
+
 
 class TestModelEvents:
     def test_get_events(self, model_with_events):
@@ -245,14 +261,14 @@ class TestModelEvents:
         """Applying events from model should modify target"""
         # Withdraw 505 from cash in 2024
         model_with_events.apply_events(2024)
-        assert sample_cash.get_base_value(2024) == 495
+        assert sample_cash.get_base_values(2024) == 495
         # Change cap deposit to 0 in 2026
         model_with_events.apply_events(2026)
         assert sample_pretax_asset_with_cap_deposit.cap_deposit == 0
         # Stop taxable income in 2030 onwards
         model_with_events.apply_events(2030)
         for year in range(2030, model_with_events.duration):
-            assert sample_taxable_income.get_base_value(year) == 0
+            assert sample_taxable_income.get_base_values(year) == 0
 
     def test_apply_events_in_run(
         self,
@@ -263,7 +279,7 @@ class TestModelEvents:
     ):
         """model.run() should apply events."""
         model_with_events.run()
-        assert sample_cash.get_base_value(2024) == 495
+        assert sample_cash.get_base_values(2024) == 495
         assert sample_pretax_asset_with_cap_deposit.cap_deposit == 0
         for year in range(2030, model_with_events.duration):
-            assert sample_taxable_income.get_base_value(year) == 0
+            assert sample_taxable_income.get_base_values(year) == 0

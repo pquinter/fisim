@@ -95,8 +95,8 @@ def basic_model(sample_revenue, sample_expense, sample_stock, sample_bond, sampl
 def sample_action_update_taxable_income(sample_taxable_income):
     return Action(
         target=sample_taxable_income,
-        action="update_base_value",
-        params={"base_value": 0, "duration": 100},
+        action="update_base_values",
+        params={"new_base_values": 0, "duration": 100},
     )
 
 
