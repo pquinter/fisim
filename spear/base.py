@@ -132,12 +132,21 @@ class InOrOutPerYear:
         Plot base value or multiplier over time.
         """
         ax = ax or plt.gca()
-        ax.plot(
-            range(self.start_year, self.start_year + (duration or self.duration)),
-            array[: duration or self.duration],
-            label=self.name,
-            **kwargs,
-        )
+
+        plot_duration = duration or self.duration
+        years = range(self.start_year, self.start_year + plot_duration)
+
+        # Calculate statistics
+        median_values = np.median(array[:, :plot_duration], axis=0)
+        lower_bound = np.percentile(array[:, :plot_duration], 5, axis=0)
+        upper_bound = np.percentile(array[:, :plot_duration], 95, axis=0)
+
+        # Plot median value
+        ax.plot(years, median_values, label=self.name, **kwargs)
+
+        # Plot confidence interval
+        ax.fill_between(years, lower_bound, upper_bound, alpha=0.2)
+
         ax.set(
             xlabel="Year",
             ylabel="Value",
@@ -155,30 +164,11 @@ class InOrOutPerYear:
         Plot base values over time for all simulations.
         """
         ax = ax or plt.gca()
-        plot_duration = duration or self.duration
-        years = range(self.start_year, self.start_year + plot_duration)
-
-        # Calculate statistics
-        median_values = np.median(self.base_values[:, :plot_duration], axis=0)
-        lower_bound = np.percentile(self.base_values[:, :plot_duration], 5, axis=0)
-        upper_bound = np.percentile(self.base_values[:, :plot_duration], 95, axis=0)
-
-        # Plot median value
-        ax.plot(years, median_values, label=f"{self.name}", **kwargs)
-
-        # Plot confidence interval
-        ax.fill_between(years, lower_bound, upper_bound, alpha=0.2)
-
-        ax.set_xlabel("Year")
-        ax.set_ylabel("Value")
-        ax.legend()
-        ax.grid(True, alpha=0.3)
-
-        # Format y-axis labels
+        self._plot(duration, ax, self.base_values, **kwargs)
+        # Format y-axis labels to use thousands (k) or millions (M) notation
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda x, p: f"${x/1e6:.1f}M" if x >= 1e6 else f"${x/1e3:.0f}K")
         )
-
         return ax
 
     def plot_multipliers(
@@ -187,7 +177,7 @@ class InOrOutPerYear:
         """
         Plot multipliers over time.
         """
-        ax = self._plot(duration, ax, self.multiplier, **kwargs)
+        ax = self._plot(duration, ax, self.multipliers, **kwargs)
         return ax
 
     def __getitem__(self, year: int) -> np.ndarray:
