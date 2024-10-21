@@ -192,6 +192,9 @@ class TestRun:
     def test_run_with_no_errors(self, basic_model):
         basic_model.run()
 
+    def test_run_with_simulations(self, model_with_simulations):
+        model_with_simulations.run()
+
     def test_run_with_logging(
         self, sample_cash, sample_stock, sample_bond, sample_revenue, sample_expense
     ):
