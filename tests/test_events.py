@@ -21,7 +21,7 @@ class TestAction:
             params={"cap_deposit": 0},
         ).apply()
         assert sample_pretax_asset_with_cap_deposit.cap_deposit == 0
-    
+
     def test_action_updates_base_values_with_duration(self, sample_revenue):
         Action(
             target=sample_revenue,
@@ -61,8 +61,10 @@ class TestEvent:
         sample_event_buy_house.apply()
         assert sample_cash.get_base_values(year) == 495
 
-    def test_event_buy_house_with_mortgage(self, sample_event_buy_house_with_mortgage, sample_mortgage):
-        sample_event_buy_house_with_mortgage.apply()  
+    def test_event_buy_house_with_mortgage(
+        self, sample_event_buy_house_with_mortgage, sample_mortgage
+    ):
+        sample_event_buy_house_with_mortgage.apply()
         assert sample_mortgage.get_base_values(2029) == 0
         assert sample_mortgage.get_base_values(2030) == 1_000
         assert sample_mortgage.get_base_values(2039) == 1_000
