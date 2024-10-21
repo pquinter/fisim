@@ -111,9 +111,7 @@ class Asset(InOrOutPerYear):
 
 class TaxableAsset(Asset):
     """
-    Taxable asset class for financial planning model, inheriting from Asset.
     Taxable assets are taxed upon withdrawal as long-term capital gains.
-
     """
 
     def prepare_simulations(self, number_of_simulations: int):
@@ -234,9 +232,7 @@ class TaxableAsset(Asset):
 
 class PretaxAsset(Asset):
     """
-    Pretax asset class for financial planning model, inheriting from Asset.
-    Pretax assets are not subject to capital gains tax, but are subject to income tax,
-    and may be subject to early withdrawal penalty.
+    Pretax assets are subject to income tax, and may be subject to early withdrawal penalty.
 
     Parameters
     ----------
