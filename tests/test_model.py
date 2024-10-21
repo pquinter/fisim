@@ -3,7 +3,7 @@ import copy
 import pytest
 
 from spear.model import FinancialModel
-from spear.utilities import calculate_total_tax
+from spear.taxes import calculate_total_tax
 
 
 class TestFinancialModelBasics:

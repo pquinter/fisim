@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .flows import InOrOutPerYear
+from .taxes import calculate_capital_gain_tax_rate, calculate_pretax_withdrawal_tax_rate
 
 
 class Asset(InOrOutPerYear):
@@ -37,8 +38,6 @@ class Asset(InOrOutPerYear):
         Array of base values.
     multiplier : np.ndarray[float]
         Array of multipliers.
-    value: np.ndarray[int]
-        Array of actual values.
     """
 
     def __init__(
@@ -108,3 +107,214 @@ class Asset(InOrOutPerYear):
         growth_rates = self.multiplier - 1
         ax = self._plot(duration, ax, growth_rates, **kwargs)
         return ax
+
+
+class TaxableAsset(Asset):
+    """
+    Taxable asset class for financial planning model, inheriting from Asset.
+    Taxable assets are taxed upon withdrawal as long-term capital gains.
+
+    """
+
+    def prepare_simulations(self, number_of_simulations: int):
+        """
+        Expand base_values and multipliers to hold multiple simulations,
+        sample growth rates for each, and initialize cumulative capital gains.
+        """
+        super().prepare_simulations(number_of_simulations)
+        self.cumulative_capital_gains = np.full(
+            (self.number_of_simulations, self.duration), 0, dtype=np.int64
+        )
+
+    def get_cumulative_capital_gains(self, year: int) -> np.ndarray:
+        """
+        Get the cumulative capital gains for a given year.
+        """
+        year_index = self._convert_year_to_index(year)
+        return self.cumulative_capital_gains[:, year_index]
+
+    def update_cumulative_capital_gains(self, year: int, gains: np.ndarray) -> None:
+        """
+        Update the cumulative capital gains for a given year.
+        """
+        year_index = self._convert_year_to_index(year)
+        self.cumulative_capital_gains[:, year_index] = gains
+
+    def grow(self, year: int) -> np.ndarray:
+        """
+        Multiply the base value of specified year, assign result to next year,
+        and track long-term capital gains.
+        """
+        gains = super().grow(year)
+        previous_cumulative_gains = self.get_cumulative_capital_gains(year)
+        self.update_cumulative_capital_gains(year + 1, previous_cumulative_gains + gains)
+        return gains
+
+    def _calculate_gross_withdrawal(
+        self,
+        year: int,
+        net_amount: np.ndarray,
+    ) -> np.ndarray:
+        """
+        Calculate the gross withdrawal amount needed to achieve as much of the desired net amount
+        as possible, after accounting for capital gains tax.
+
+        Parameters
+        ----------
+        year : int
+            The year for which to calculate the withdrawal.
+        net_amount : np.ndarray
+            The desired net amount after taxes.
+
+        Returns
+        -------
+        np.ndarray
+            The gross withdrawal amount needed.
+        """
+        available = self.get_base_values(year)
+        cumulative_gains = self.get_cumulative_capital_gains(year)
+
+        # Calculate the proportion of the withdrawal that is capital gains
+        gain_ratio = np.divide(  # Avoid division by zero errors
+            cumulative_gains,
+            available,
+            out=np.zeros_like(available, dtype=float),
+            where=available != 0,
+        )
+
+        # Initial guess for gross withdrawal
+        gross_withdrawn = net_amount / (1 - 0.15 * gain_ratio)  # Using 15% as initial guess
+        gross_withdrawn = np.where(gross_withdrawn >= available, available, gross_withdrawn)
+
+        # Iterate to find the correct gross amount
+        for _ in range(5):  # Usually converges within a few iterations
+            capital_gains = gross_withdrawn * gain_ratio
+            total_taxable_income = capital_gains
+            tax_rate = calculate_capital_gain_tax_rate(total_taxable_income)
+            gross_withdrawn = np.where(
+                gross_withdrawn >= available, available, net_amount / (1 - tax_rate * gain_ratio)
+            )
+        net_withdrawn = gross_withdrawn - capital_gains * tax_rate
+        return gross_withdrawn, net_withdrawn, capital_gains
+
+    def withdraw(
+        self,
+        year: int,
+        amount: np.ndarray,
+    ) -> np.ndarray:
+        """
+        Withdraw amount from the asset for a given year, accounting for capital gains tax.
+        Return the net amount withdrawn after taxes, which can be subtracted
+        from the requested amount to balance the cash flow.
+
+        Parameters
+        ----------
+        year : int
+            The year for which to calculate the withdrawal.
+        amount : np.ndarray
+            The desired net withdrawal amount.
+
+        Returns
+        -------
+        np.ndarray
+            The net amount withdrawn after taxes.
+        """
+        available = self.get_base_values(year)
+        (
+            gross_withdrawn,
+            net_withdrawn,
+            capital_gains,
+        ) = self._calculate_gross_withdrawal(year, amount)
+        self.update_cumulative_capital_gains(
+            year, self.get_cumulative_capital_gains(year) - capital_gains
+        )
+        self.update_base_values(year, available - gross_withdrawn)
+        return net_withdrawn
+
+
+class PretaxAsset(Asset):
+    """
+    Pretax asset class for financial planning model, inheriting from Asset.
+    Pretax assets are not subject to capital gains tax, but are subject to income tax,
+    and may be subject to early withdrawal penalty.
+
+    Parameters
+    ----------
+    In addition to the parameters for Asset, PretaxAsset takes:
+    age : Optional[int] = None
+        Age of the investor to determine whether early withdrawal penalty applies.
+        Required when withdrawing from the asset.
+    state : Optional[str] = None
+        To calculate state income tax.
+        Required when withdrawing from the asset.
+    """
+
+    def __init__(self, age: int, state: str, **kwargs):
+        self.age = age
+        self.state = state
+        super().__init__(**kwargs)
+
+    def _calculate_gross_withdrawal(
+        self,
+        year: int,
+        net_amount: np.ndarray,
+    ) -> np.ndarray:
+        """
+        Calculate the gross withdrawal amount needed to achieve as much of the desired net amount
+        as possible, after accounting for income tax and early withdrawal penalty.
+
+        Parameters
+        ----------
+        year : int
+            The year for which to calculate the withdrawal.
+        net_amount : np.ndarray
+            The desired net withdrawal amount.
+        """
+        available = self.get_base_values(year)
+        tax_rate = calculate_pretax_withdrawal_tax_rate(net_amount, self.state, self.age)
+
+        # Initial guess for gross withdrawal
+        gross_withdrawn = net_amount / (1 - tax_rate)
+        gross_withdrawn = np.where(gross_withdrawn >= available, available, gross_withdrawn)
+
+        # Iterate to find the correct gross amount
+        for _ in range(5):  # Usually converges within a few iterations
+            tax_rate = calculate_pretax_withdrawal_tax_rate(gross_withdrawn, self.state, self.age)
+            gross_withdrawn = np.where(
+                gross_withdrawn >= available, available, net_amount / (1 - tax_rate)
+            )
+        net_withdrawn = gross_withdrawn - gross_withdrawn * tax_rate
+        return gross_withdrawn, net_withdrawn
+
+    def _validate_withdrawal_parameters(self) -> None:
+        if self.age is None or self.state is None:
+            raise ValueError("Age and state must be set before withdrawing from a pretax asset")
+
+    def withdraw(
+        self,
+        year: int,
+        amount: np.ndarray,
+    ) -> np.ndarray:
+        """
+        Withdraw amount from the asset for a given year, accounting for income
+        tax and early withdrawal penalty.
+        Return the net amount withdrawn after taxes, which can be subtracted
+        from the requested amount to balance the cash flow.
+
+        Parameters
+        ----------
+        year : int
+            The year for which to calculate the withdrawal.
+        amount : np.ndarray
+            The desired net withdrawal amount.
+
+        Returns
+        -------
+        np.ndarray
+            The net amount withdrawn after taxes.
+        """
+        self._validate_withdrawal_parameters()
+        gross_withdrawn, net_withdrawn = self._calculate_gross_withdrawal(year, amount)
+        available = self.get_base_values(year)
+        self.update_base_values(year, available - gross_withdrawn)
+        return net_withdrawn

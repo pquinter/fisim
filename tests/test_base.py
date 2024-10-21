@@ -28,6 +28,13 @@ class TestInOrOutPerYear:
         sample_revenue.update_base_values(2025, 100)
         assert sample_revenue.get_base_values(2025) == 100
         assert sample_revenue.get_base_values(2024) == 1_000
+    
+    def test_update_base_values_with_duration(self, sample_revenue):
+        sample_revenue.update_base_values(2025, 2_000, duration=5)
+        assert sample_revenue.get_base_values(2024) == 1_000
+        assert sample_revenue.get_base_values(2025) == 2_000
+        assert sample_revenue.get_base_values(2029) == 2_000
+        assert sample_revenue.get_base_values(2030) == 1_000
 
     def test_add_to_base_values(self, sample_revenue):
         sample_revenue.add_to_base_values(2024, 500)

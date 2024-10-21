@@ -1,6 +1,6 @@
 import pytest
 
-from spear.assets import Asset
+from spear.assets import Asset, PretaxAsset, TaxableAsset
 from spear.events import Action, Event
 from spear.flows import Expense, InOrOutPerYear, TaxableIncome
 from spear.model import FinancialModel
@@ -24,6 +24,11 @@ def sample_expense():
         name="Test Expense", initial_value=1_000, duration=10, inflation_rate=0.02, start_year=2024
     )
 
+@pytest.fixture
+def sample_mortgage():
+    return Expense(
+        name="Test Mortgage", initial_value=0, duration=100, inflation_rate=0.06, start_year=2024
+    )
 
 @pytest.fixture
 def sample_cash():
@@ -70,6 +75,17 @@ def sample_stock_with_cap_deposit():
 
 
 @pytest.fixture
+def sample_taxable_stock():
+    return TaxableAsset(
+        name="Test Stock for Capital Gains",
+        initial_value=200_000,
+        start_year=2024,
+        growth_rate=0.1,
+        allocation=0.5,
+    )
+
+
+@pytest.fixture
 def sample_pretax_asset_with_cap_deposit():
     return Asset(
         name="Test 401k",
@@ -78,6 +94,19 @@ def sample_pretax_asset_with_cap_deposit():
         growth_rate=0.01,
         pretax=True,
         cap_deposit=500,
+    )
+
+
+@pytest.fixture
+def sample_pretax_asset():
+    return PretaxAsset(
+        name="Test 401k",
+        initial_value=200_000,
+        start_year=2024,
+        growth_rate=0.05,
+        pretax=True,
+        age=30,
+        state="MA",
     )
 
 
@@ -129,6 +158,16 @@ def sample_event_stop_investing_in_401k(sample_action_change_cap_deposit):
 @pytest.fixture
 def sample_event_buy_house(sample_action_withdraw_cash):
     return Event(name="Buy House", year=2024, actions=[sample_action_withdraw_cash])
+
+@pytest.fixture
+def sample_event_buy_house_with_mortgage(sample_mortgage):
+    return Event(
+        name="Buy House",
+        year=2030,
+        actions=[
+            Action(target=sample_mortgage, action="update_base_values", params={"new_base_values": 1_000, "duration": 10})
+        ],
+    )
 
 
 @pytest.fixture

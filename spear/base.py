@@ -193,16 +193,16 @@ class InOrOutPerYear:
     def __getitem__(self, year: int) -> np.ndarray:
         return self.get_base_values(year)
 
-    def grow(self, year: int) -> None:
+    def grow(self, year: int) -> np.ndarray:
         """
         Multiply the base value of specified year, and assign result to base value of next year.
         Can be used to model e.g. inflation or stock growth.
         """
-        year_index = self._convert_year_to_index(year)
-        if year_index + 1 < self.duration:
-            self.base_values[:, year_index + 1] = (
-                self.base_values[:, year_index] * self.multipliers[:, year_index]
-            )
+        current_values = self.get_base_values(year)
+        next_values = current_values * self.get_multipliers(year)
+        growth = next_values - current_values
+        self.update_base_values(year + 1, next_values)
+        return growth
 
     def prepare_simulations(self, number_of_simulations: int):
         """

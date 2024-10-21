@@ -1,3 +1,5 @@
+from enum import Enum
+
 # Federal income tax rates for 2023
 FEDERAL_TAX_RATES = {
     10: 11000,
@@ -27,3 +29,12 @@ STATE_TAX_RATES = {
     "MI": {4.25: float("inf")},  # Michigan flat tax rate
     "OH": {0: 25000, 2.765: 44250, 3.226: 88450, 3.688: 110650, 3.990: float("inf")},
 }
+
+
+# Tax brackets from 2024 for married filing jointly
+LONG_TERM_CAPITAL_GAINS_TAX_BRACKETS = [(0, 0.0), (94_051, 0.15), (583_751, 0.20)]
+
+
+class EarlyWithdrawal(Enum):
+    AGE = 59.5
+    PENALTY = 0.10

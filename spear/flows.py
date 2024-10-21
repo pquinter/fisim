@@ -7,7 +7,7 @@ import numpy as np
 
 from spear.base import InOrOutPerYear
 from spear.constants import STATE_TAX_RATES
-from spear.utilities import calculate_total_tax
+from spear.taxes import calculate_total_tax
 
 
 class Expense(InOrOutPerYear):

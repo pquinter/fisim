@@ -25,6 +25,7 @@ class FinancialModel:
     expenses: List[InOrOutPerYear]
     assets: List[Asset]
     duration: int
+    age: int = 30
     number_of_simulations: int = 1
 
     events: Optional[List[Event]] = None
@@ -328,3 +329,9 @@ class FinancialModel:
         Get a revenue by name.
         """
         return self._get_money_by_name(name, self.revenues)
+
+    def get_age(self, year: int) -> int:
+        """
+        Get the age of the investor.
+        """
+        return self.age + year - self.start_year

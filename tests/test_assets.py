@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 
 class TestAsset:
@@ -28,3 +29,99 @@ class TestAsset:
         deposited = sample_stock_with_cap_deposit.deposit(2024, to_deposit)
         assert deposited == 1_000
         assert sample_stock_with_cap_deposit.get_base_values(2024) == 2_000
+
+
+class TestTaxableAsset:
+    @pytest.fixture(autouse=True)
+    def setup(self, sample_taxable_stock):
+        self.sample_taxable_stock = sample_taxable_stock
+        for year in range(2024, 2031):
+            self.sample_taxable_stock.grow(year)
+
+    def test_get_cumulative_capital_gains(self):
+        assert self.sample_taxable_stock.get_cumulative_capital_gains(2024) == 0
+        assert self.sample_taxable_stock.get_cumulative_capital_gains(2030) == pytest.approx(
+            154_312, rel=1_000
+        )
+
+    def test_calculate_gross_withdrawal_less_than_available(self):
+        to_withdraw = 250_000
+        (
+            gross_withdrawn,
+            net_withdrawn,
+            capital_gains,
+        ) = self.sample_taxable_stock._calculate_gross_withdrawal(2030, to_withdraw)
+        assert gross_withdrawn == pytest.approx(
+            267_477, rel=0.001
+        ), "Gross withdrawn amount is incorrect"
+        assert net_withdrawn == pytest.approx(
+            250_000, rel=0.001
+        ), "Net withdrawn amount is incorrect"
+        assert capital_gains == pytest.approx(
+            116_493, rel=0.001
+        ), "Capital gains amount is incorrect"
+
+    def test_calculate_gross_withdrawal_more_than_available(self):
+        to_withdraw = 400_000
+        (
+            gross_withdrawn,
+            net_withdrawn,
+            capital_gains,
+        ) = self.sample_taxable_stock._calculate_gross_withdrawal(2030, to_withdraw)
+        assert gross_withdrawn == pytest.approx(
+            354_312, rel=0.001
+        ), "Gross withdrawn amount is incorrect"
+        assert net_withdrawn == pytest.approx(
+            331_165, rel=0.001
+        ), "Net withdrawn amount is incorrect"
+        assert capital_gains == pytest.approx(
+            154_312, rel=0.001
+        ), "Capital gains amount is incorrect"
+
+    def test_withdraw(self):
+        to_withdraw = 250_000
+        net_withdrawn = self.sample_taxable_stock.withdraw(2030, to_withdraw)
+        assert net_withdrawn == pytest.approx(250_000, rel=0.001)
+
+
+class TestPretaxAsset:
+    def test_calculate_gross_withdrawal_less_than_available_and_early_withdrawal_penalty(
+        self, sample_pretax_asset
+    ):
+        to_withdraw = 100_000
+        (
+            gross_withdrawn,
+            net_withdrawn,
+        ) = sample_pretax_asset._calculate_gross_withdrawal(2024, to_withdraw)
+        assert gross_withdrawn == pytest.approx(
+            153_114, rel=0.001
+        ), "Gross withdrawn amount is incorrect"
+        assert net_withdrawn == pytest.approx(
+            100_000, rel=0.001
+        ), "Net withdrawn amount is incorrect"
+
+    def test_calculate_gross_withdrawal_less_than_available_and_no_early_withdrawal_penalty(
+        self, sample_pretax_asset
+    ):
+        sample_pretax_asset.age = 60
+        to_withdraw = 100_000
+        (
+            gross_withdrawn,
+            net_withdrawn,
+        ) = sample_pretax_asset._calculate_gross_withdrawal(2024, to_withdraw)
+        assert gross_withdrawn == pytest.approx(
+            131_548, rel=0.001
+        ), "Gross withdrawn amount is incorrect"
+        assert net_withdrawn == pytest.approx(
+            100_000, rel=0.001
+        ), "Net withdrawn amount is incorrect"
+
+    def test_withdraw_less_than_available_with_early_withdrawal_penalty(self, sample_pretax_asset):
+        to_withdraw = 100_000
+        net_withdrawn = sample_pretax_asset.withdraw(2024, to_withdraw)
+        assert net_withdrawn == pytest.approx(to_withdraw, rel=0.001)
+
+    def test_withdraw_more_than_available(self, sample_pretax_asset):
+        to_withdraw = 300_000
+        net_withdrawn = sample_pretax_asset.withdraw(2024, to_withdraw)
+        assert net_withdrawn == pytest.approx(127_168, rel=0.001)
