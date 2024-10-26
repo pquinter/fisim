@@ -1,5 +1,4 @@
 [![Tests](https://github.com/pquinter/financial-planning/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/pquinter/financial-planning/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/pquinter/financial-planning/branch/main/graph/badge.svg)](https://codecov.io/gh/pquinter/financial-planning)
 
 # Strategic Planning for Early Retirement (SPEAR)
 
