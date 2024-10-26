@@ -25,13 +25,11 @@ class FinancialModel:
     expenses: List[InOrOutPerYear]
     assets: List[Asset]
     duration: int
-    age: int = 30
+    age: int
     number_of_simulations: int = 1
 
     events: Optional[List[Event]] = None
     debt: Optional[InOrOutPerYear] = None  # type: ignore
-    stocks_allocation: float = 0.7
-    bonds_allocation: float = 0.3
     cash_buffer: int = 50_000
 
     enable_logging: bool = False
@@ -52,11 +50,15 @@ class FinancialModel:
 
     def _validate_asset_allocation(self) -> None:
         """
-        Raise an error if the total allocation is not 1.
+        Raise an error if allocations are set and their total is not 1.
         """
-        total_allocation = sum(asset.allocation or 0 for asset in self.assets)
-        if not np.isclose(total_allocation, 1):
-            raise ValueError(f"Total assets allocation is {total_allocation} but must sum to 1.")
+        allocations = [asset.allocation for asset in self.assets if asset.allocation is not None]
+        if allocations:
+            total_allocation = sum(allocations)
+            if not np.isclose(total_allocation, 1):
+                raise ValueError(
+                    f"Total assets allocation is {total_allocation} but must sum to 1."
+                )
 
     def _prepare_simulations(self):
         """

@@ -1,5 +1,7 @@
 import copy
 
+import matplotlib.pyplot as plt
+import numpy as np
 import pytest
 
 from spear.model import FinancialModel
@@ -12,11 +14,13 @@ class TestFinancialModelBasics:
             sample_stock.allocation = 0.8
             sample_bond.allocation = 0.3
             FinancialModel(
-                revenues=[], expenses=[], assets=[sample_stock, sample_bond], duration=10
+                revenues=[], expenses=[], assets=[sample_stock, sample_bond], duration=10, age=30
             )
 
     def test_valid_asset_allocation_does_not_raise_error(self, sample_stock, sample_bond):
-        FinancialModel(revenues=[], expenses=[], assets=[sample_stock, sample_bond], duration=10)
+        FinancialModel(
+            revenues=[], expenses=[], assets=[sample_stock, sample_bond], duration=10, age=30
+        )
 
     def test_model_with_logging(
         self, sample_cash, sample_stock, sample_bond, sample_revenue, sample_expense
@@ -26,6 +30,7 @@ class TestFinancialModelBasics:
             expenses=[sample_expense],
             assets=[sample_cash, sample_stock, sample_bond],
             duration=10,
+            age=30,
             enable_logging=True,
         )
 
@@ -37,6 +42,34 @@ class TestFinancialModelBasics:
         assert basic_model.get_asset("Test Stock") == sample_stock
         assert basic_model.get_expense("Test Expense") == sample_expense
         assert basic_model.get_revenue("Test Revenue") == sample_revenue
+        assert basic_model.get_revenue("Non Existent") is None
+
+    def test_get_age(self, basic_model):
+        assert basic_model.get_age(2025) == 31
+        assert basic_model.get_age(2040) == 46
+
+    def test_plot_assets(self, basic_model):
+        ax = basic_model.plot_assets()
+        assert len(ax.get_lines()[0].get_xdata()) == basic_model.duration
+        # Close figure to avoid messing with other plot tests
+        plt.close(ax.figure)
+
+    def test_plot_cash_flow(self, basic_model):
+        ax = basic_model.plot_cash_flow()
+        assert len(ax.get_lines()[0].get_xdata()) == basic_model.duration
+        # Close figure to avoid messing with other plot tests
+        plt.close(ax.figure)
+
+    def test_plot_events(self, model_with_events):
+        ax = model_with_events.plot_events()
+        # Close figure to avoid messing with other plot tests
+        plt.close(ax.figure)
+
+    def test_plot_all(self, basic_model):
+        ax = basic_model.plot_all()
+        assert len(ax.get_lines()[0].get_xdata()) == basic_model.duration
+        # Close figure to avoid messing with other plot tests
+        plt.close(ax.figure)
 
 
 class TestRunOperations:
@@ -192,6 +225,15 @@ class TestRun:
     def test_run_with_no_errors(self, basic_model):
         basic_model.run()
 
+    def test_run_with_simulations(self, model_with_simulations):
+        model_with_simulations.run()
+
+    def test_run_with_events(self, model_with_events):
+        model_with_events.run()
+
+    def test_run_with_portfolios(self, model_with_portfolios):
+        model_with_portfolios.run()
+
     def test_run_with_logging(
         self, sample_cash, sample_stock, sample_bond, sample_revenue, sample_expense
     ):
@@ -200,6 +242,7 @@ class TestRun:
             expenses=[sample_expense],
             assets=[sample_cash, sample_stock, sample_bond],
             duration=10,
+            age=30,
             enable_logging=True,
         ).run()
 
@@ -267,8 +310,7 @@ class TestModelEvents:
         assert sample_pretax_asset_with_cap_deposit.cap_deposit == 0
         # Stop taxable income in 2030 onwards
         model_with_events.apply_events(2030)
-        for year in range(2030, model_with_events.duration):
-            assert sample_taxable_income.get_base_values(year) == 0
+        assert np.all(sample_taxable_income.base_values[2030:] == 0)
 
     def test_apply_events_in_run(
         self,
@@ -281,5 +323,4 @@ class TestModelEvents:
         model_with_events.run()
         assert sample_cash.get_base_values(2024) == 495
         assert sample_pretax_asset_with_cap_deposit.cap_deposit == 0
-        for year in range(2030, model_with_events.duration):
-            assert sample_taxable_income.get_base_values(year) == 0
+        assert np.all(sample_taxable_income.base_values[2030:] == 0)

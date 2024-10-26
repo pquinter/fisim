@@ -1,8 +1,15 @@
 import pytest
 
-from spear.assets import Asset, PretaxAsset, TaxableAsset
+from spear.assets import (
+    Asset,
+    PretaxAsset,
+    PretaxPortfolio,
+    TaxableAsset,
+    TaxablePortfolio,
+)
 from spear.events import Action, Event
 from spear.flows import Expense, InOrOutPerYear, TaxableIncome
+from spear.growth import GrowthType
 from spear.model import FinancialModel
 
 
@@ -24,11 +31,13 @@ def sample_expense():
         name="Test Expense", initial_value=1_000, duration=10, inflation_rate=0.02, start_year=2024
     )
 
+
 @pytest.fixture
 def sample_mortgage():
     return Expense(
         name="Test Mortgage", initial_value=0, duration=100, inflation_rate=0.06, start_year=2024
     )
+
 
 @pytest.fixture
 def sample_cash():
@@ -75,6 +84,16 @@ def sample_stock_with_cap_deposit():
 
 
 @pytest.fixture
+def sample_stock_with_growth_type():
+    return Asset(
+        name="Test Stock with Growth Type",
+        initial_value=1_000,
+        start_year=2024,
+        growth_type=GrowthType.STOCKS,
+    )
+
+
+@pytest.fixture
 def sample_taxable_stock():
     return TaxableAsset(
         name="Test Stock for Capital Gains",
@@ -111,12 +130,50 @@ def sample_pretax_asset():
 
 
 @pytest.fixture
+def sample_taxable_portfolio():
+    return TaxablePortfolio(
+        name="Test Taxable Portfolio",
+        initial_value=1_000,
+        start_year=2024,
+        age=30,
+        number_of_simulations=1_000,
+    )
+
+
+@pytest.fixture
+def sample_pretax_portfolio():
+    return PretaxPortfolio(
+        name="Test Pretax Portfolio",
+        initial_value=1_000,
+        start_year=2024,
+        age=30,
+        state="MA",
+        number_of_simulations=1_000,
+    )
+
+
+@pytest.fixture
 def basic_model(sample_revenue, sample_expense, sample_stock, sample_bond, sample_cash):
     return FinancialModel(
         revenues=[sample_revenue],
         expenses=[sample_expense],
         assets=[sample_cash, sample_bond, sample_stock],
         duration=10,
+        age=30,
+    )
+
+
+@pytest.fixture
+def model_with_simulations(
+    sample_revenue, sample_expense, sample_stock, sample_bond, sample_cash, sample_pretax_asset
+):
+    return FinancialModel(
+        revenues=[sample_revenue],
+        expenses=[sample_expense],
+        assets=[sample_cash, sample_bond, sample_stock, sample_pretax_asset],
+        duration=10,
+        age=30,
+        number_of_simulations=1_000,
     )
 
 
@@ -159,13 +216,18 @@ def sample_event_stop_investing_in_401k(sample_action_change_cap_deposit):
 def sample_event_buy_house(sample_action_withdraw_cash):
     return Event(name="Buy House", year=2024, actions=[sample_action_withdraw_cash])
 
+
 @pytest.fixture
 def sample_event_buy_house_with_mortgage(sample_mortgage):
     return Event(
         name="Buy House",
         year=2030,
         actions=[
-            Action(target=sample_mortgage, action="update_base_values", params={"new_base_values": 1_000, "duration": 10})
+            Action(
+                target=sample_mortgage,
+                action="update_base_values",
+                params={"new_base_values": 1_000, "duration": 10},
+            )
         ],
     )
 
@@ -184,3 +246,16 @@ def model_with_events(
         sample_event_buy_house,
     ]
     return model
+
+
+@pytest.fixture
+def model_with_portfolios(
+    sample_revenue, sample_expense, sample_taxable_portfolio, sample_pretax_portfolio
+):
+    return FinancialModel(
+        revenues=[sample_revenue],
+        expenses=[sample_expense],
+        assets=[sample_taxable_portfolio, sample_pretax_portfolio],
+        duration=10,
+        age=30,
+    )

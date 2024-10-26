@@ -1,4 +1,5 @@
 from enum import Enum
+from importlib import resources
 
 # Federal income tax rates for 2023
 FEDERAL_TAX_RATES = {
@@ -38,3 +39,8 @@ LONG_TERM_CAPITAL_GAINS_TAX_BRACKETS = [(0, 0.0), (94_051, 0.15), (583_751, 0.20
 class EarlyWithdrawal(Enum):
     AGE = 59.5
     PENALTY = 0.10
+
+
+HISTORIC_GROWTH_RATES_PATH = resources.files("spear.data").joinpath(
+    "historic_annual_growth_rates.csv"
+)
