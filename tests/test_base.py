@@ -76,6 +76,12 @@ class TestInOrOutPerYear:
         # Close figure to avoid messing with other plot tests
         plt.close(ax.figure)
 
+    def test_plot_multipliers(self, sample_revenue):
+        ax = sample_revenue.plot_multipliers()
+        assert len(ax.get_lines()[0].get_xdata()) == sample_revenue.duration
+        # Close figure to avoid messing with other plot tests
+        plt.close(ax.figure)
+
     def test_grow_one_year(self, sample_revenue):
         initial_value = sample_revenue.get_base_values(2024)
         sample_revenue.grow(2024)
@@ -115,6 +121,9 @@ class TestInOrOutPerYear:
     def test_get_value_outside_duration_returns_zero(self, sample_revenue):
         assert sample_revenue.get_base_values(2500) == 0
         assert sample_revenue.get_multipliers(2500) == 0
+
+    def test_print(self, sample_revenue):
+        print(sample_revenue)
 
 
 class TestWithdraw:

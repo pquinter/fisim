@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+import numpy as np
 import pytest
 
 from spear.events import Action
@@ -43,10 +45,8 @@ class TestEvent:
         """Stops recurring taxable income at start year, by zeroing it out."""
         action = sample_event_stop_taxable_income.actions[0]
         year = action.params["year"]
-        duration = action.params["duration"]
         sample_event_stop_taxable_income.apply()
-        for y in range(year, min(year + duration, len(sample_taxable_income.base_values))):
-            assert sample_taxable_income.get_base_values(y) == 0
+        assert np.all(sample_taxable_income.base_values[year:] == 0)
 
     def test_event_stop_investing_in_401k(
         self, sample_event_stop_investing_in_401k, sample_pretax_asset_with_cap_deposit
@@ -69,3 +69,8 @@ class TestEvent:
         assert sample_mortgage.get_base_values(2030) == 1_000
         assert sample_mortgage.get_base_values(2039) == 1_000
         assert sample_mortgage.get_base_values(2040) == 0
+
+    def test_event_plot(self, sample_event_buy_house):
+        ax = sample_event_buy_house.plot()
+        # Close figure to avoid messing with other plot tests
+        plt.close(ax.figure)

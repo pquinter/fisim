@@ -1,12 +1,17 @@
 """
 Asset class for financial planning model
 """
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from .flows import InOrOutPerYear
+from .growth import (
+    GrowthType,
+    get_rebalancing_stock_allocations,
+    sample_from_historical_growth_rates,
+)
 from .taxes import calculate_capital_gain_tax_rate, calculate_pretax_withdrawal_tax_rate
 
 
@@ -42,14 +47,14 @@ class Asset(InOrOutPerYear):
 
     def __init__(
         self,
-        growth_rate: float,
+        growth_rate: Optional[float] = None,
         allocation: Optional[float] = None,
         cap_value: Optional[int] = None,
         pretax: bool = False,
         cap_deposit: Optional[int] = None,
-        sample_growth_rates: bool = False,
-        seed: Optional[int] = None,
+        seed: int = 42,
         scale: float = 0.05,
+        growth_type: Optional[GrowthType] = None,
         **kwargs,
     ):
         self.growth_rate = growth_rate
@@ -59,20 +64,28 @@ class Asset(InOrOutPerYear):
         self.pretax = pretax
         self.seed = seed
         self.scale = scale
-        self.sample_growth_rates = sample_growth_rates
-        kwargs["multiplier"] = 1 + self.growth_rate
+        self.growth_type = growth_type
+        kwargs["multiplier"] = 1 + (self.growth_rate or 0)
         super().__init__(**kwargs)
         # Assets are not recurrent
         self.base_values[:, 1:] = 0
-        if self.sample_growth_rates:
+        if self.growth_type is not None:
             self._sample_growth_rates()
 
+    def _validate_and_set_parameter(
+        self, parameter: str, value: Any, validate_kwargs: Dict[str, Any]
+    ):
+        """
+        Raise an error if parameter is specified to an unallowed value in `validate_kwargs`,
+        and set it to the given value otherwise.
+        """
+        if parameter in validate_kwargs and validate_kwargs[parameter] != value:
+            raise TypeError(f"Do not specify `{parameter}`, it is automatically set to {value}")
+        validate_kwargs[parameter] = value
+
     def _sample_growth_rates(self):
-        rng = np.random.default_rng(seed=self.seed)
-        self.multipliers = rng.normal(
-            loc=1 + self.growth_rate,
-            scale=self.scale,
-            size=(self.number_of_simulations, self.duration),
+        self.multipliers = 1 + sample_from_historical_growth_rates(
+            self.growth_type, self.number_of_simulations, self.duration, self.seed
         )
 
     def prepare_simulations(self, number_of_simulations: int):
@@ -81,7 +94,7 @@ class Asset(InOrOutPerYear):
         and sample growth rates for each.
         """
         super().prepare_simulations(number_of_simulations)
-        if self.sample_growth_rates:
+        if self.growth_type is not None:
             self._sample_growth_rates()
 
     def deposit(self, year: int, amount: np.ndarray) -> np.ndarray:
@@ -104,7 +117,7 @@ class Asset(InOrOutPerYear):
         """
         Plot growth rates over time.
         """
-        growth_rates = self.multiplier - 1
+        growth_rates = self.multipliers - 1
         ax = self._plot(duration, ax, growth_rates, **kwargs)
         return ax
 
@@ -230,6 +243,88 @@ class TaxableAsset(Asset):
         return net_withdrawn
 
 
+class TaxablePortfolio(Asset):
+    """
+    Taxable portfolio that simulates a mix of bonds and stocks, with a growth rate for each,
+    and an allocation that rebalances according to:
+
+        stocks_allocation = (120 - age) / 100
+        bonds_allocation = 1 - stocks_allocation
+
+    Instead of having separate assets for stocks and bonds, by having a single asset with a
+    weighted average growth rate, we simulate the behavior of a taxable portfolio that
+    rebalances its allocation between stocks and bonds every year.
+    """
+
+    def __init__(
+        self,
+        age: int,
+        **kwargs,
+    ):
+        self.age = age
+        # Set so that _sample_growth_rates is called
+        self._validate_and_set_parameter("growth_type", GrowthType.PORTFOLIO, kwargs)
+        super().__init__(**kwargs)
+
+    @property
+    def stock_allocations(self) -> np.ndarray:
+        return get_rebalancing_stock_allocations(self.age, self.duration)
+
+    @property
+    def bond_allocations(self) -> np.ndarray:
+        return 1 - self.stock_allocations
+
+    def _sample_growth_rates(self):
+        """
+        Sample growth rates that simulate a mix of stocks and bonds,
+        with the allocation between stocks and bonds changing over time.
+        """
+        stocks_growth = sample_from_historical_growth_rates(
+            GrowthType.STOCKS, self.number_of_simulations, self.duration, self.seed
+        )
+        bonds_growth = sample_from_historical_growth_rates(
+            GrowthType.BONDS, self.number_of_simulations, self.duration, self.seed
+        )
+        # Combine growth rates based on allocation
+        self.multipliers = 1 + (
+            self.stock_allocations * stocks_growth + self.bond_allocations * bonds_growth
+        )
+
+    def plot(
+        self,
+        duration: Optional[int] = None,
+        ax: Optional[plt.Axes] = None,
+        split: bool = False,
+        **kwargs,
+    ) -> plt.Axes:
+        """
+        Plot the portfolio over time.
+
+        Parameters
+        ----------
+        duration : Optional[int]
+            The duration to plot.
+        ax : Optional[plt.Axes]
+            The axes to plot on.
+        split : bool
+            Whether to plot stocks and bonds separately.
+
+        Returns
+        -------
+        plt.Axes
+            The axes with the plot.
+        """
+        ax = ax or plt.gca()
+        if split:
+            stocks = self.stock_allocations * self.base_values
+            bonds = self.bond_allocations * self.base_values
+            ax = self._plot(duration, ax, stocks, label=f"{self.name} (Stocks)", **kwargs)
+            ax = self._plot(duration, ax, bonds, label=f"{self.name} (Bonds)", **kwargs)
+        else:
+            ax = self._plot(duration, ax, self.base_values, label=f"{self.name}", **kwargs)
+        return ax
+
+
 class PretaxAsset(Asset):
     """
     Pretax assets are subject to income tax, and may be subject to early withdrawal penalty.
@@ -248,6 +343,7 @@ class PretaxAsset(Asset):
     def __init__(self, age: int, state: str, **kwargs):
         self.age = age
         self.state = state
+        self._validate_and_set_parameter("pretax", True, kwargs)
         super().__init__(**kwargs)
 
     def _calculate_gross_withdrawal(
@@ -314,3 +410,76 @@ class PretaxAsset(Asset):
         available = self.get_base_values(year)
         self.update_base_values(year, available - gross_withdrawn)
         return net_withdrawn
+
+
+class PretaxPortfolio(PretaxAsset):
+    """
+    Pretax portfolio that simulates a mix of bonds and stocks, with a set growth rate for each,
+    and an allocation that rebalances according to:
+
+        stocks_allocation = (120 - age) / 100
+        bonds_allocation = 1 - stocks_allocation
+    """
+
+    def __init__(self, **kwargs):
+        # Set so that _sample_growth_rates is called
+        self._validate_and_set_parameter("growth_type", GrowthType.PORTFOLIO, kwargs)
+        super().__init__(**kwargs)
+
+    @property
+    def stock_allocations(self) -> np.ndarray:
+        return get_rebalancing_stock_allocations(self.age, self.duration)
+
+    @property
+    def bond_allocations(self) -> np.ndarray:
+        return 1 - self.stock_allocations
+
+    def _sample_growth_rates(self):
+        """
+        Sample growth rates that simulate a mix of stocks and bonds,
+        with the allocation between stocks and bonds changing over time.
+        """
+        stocks_growth = sample_from_historical_growth_rates(
+            GrowthType.STOCKS, self.number_of_simulations, self.duration, self.seed
+        )
+        bonds_growth = sample_from_historical_growth_rates(
+            GrowthType.BONDS, self.number_of_simulations, self.duration, self.seed
+        )
+        # Combine growth rates based on allocation
+        self.multipliers = 1 + (
+            self.stock_allocations * stocks_growth + self.bond_allocations * bonds_growth
+        )
+
+    def plot(
+        self,
+        duration: Optional[int] = None,
+        ax: Optional[plt.Axes] = None,
+        split: bool = False,
+        **kwargs,
+    ) -> plt.Axes:
+        """
+        Plot the portfolio over time.
+
+        Parameters
+        ----------
+        duration : Optional[int]
+            The duration to plot.
+        ax : Optional[plt.Axes]
+            The axes to plot on.
+        split : bool
+            Whether to plot stocks and bonds separately.
+
+        Returns
+        -------
+        plt.Axes
+            The axes with the plot.
+        """
+        ax = ax or plt.gca()
+        if split:
+            stocks = self.stock_allocations * self.base_values
+            bonds = self.bond_allocations * self.base_values
+            ax = self._plot(duration, ax, stocks, label=f"{self.name} (Stocks)", **kwargs)
+            ax = self._plot(duration, ax, bonds, label=f"{self.name} (Bonds)", **kwargs)
+        else:
+            ax = self._plot(duration, ax, self.base_values, label=f"{self.name}", **kwargs)
+        return ax

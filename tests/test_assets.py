@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
@@ -29,6 +30,27 @@ class TestAsset:
         deposited = sample_stock_with_cap_deposit.deposit(2024, to_deposit)
         assert deposited == 1_000
         assert sample_stock_with_cap_deposit.get_base_values(2024) == 2_000
+
+    def test_validate_and_set_parameter(self, sample_stock):
+        with pytest.raises(TypeError):
+            sample_stock._validate_and_set_parameter("cap_deposit", 100_000, {"cap_deposit": 1_000})
+
+    def test_plot_growth_rates(self, sample_stock):
+        ax = sample_stock.plot_growth_rates()
+        assert len(ax.get_lines()[0].get_xdata()) == sample_stock.duration
+        # Close figure to avoid messing with other plot tests
+        plt.close(ax.figure)
+
+    def test_sample_growth_rates(self, sample_stock_with_growth_type):
+        sample_stock_with_growth_type._sample_growth_rates()
+        assert (
+            len(sample_stock_with_growth_type.multipliers)
+            == sample_stock_with_growth_type.number_of_simulations
+        )
+        assert sample_stock_with_growth_type.multipliers.shape == (
+            sample_stock_with_growth_type.number_of_simulations,
+            sample_stock_with_growth_type.duration,
+        )
 
 
 class TestTaxableAsset:
@@ -125,3 +147,59 @@ class TestPretaxAsset:
         to_withdraw = 300_000
         net_withdrawn = sample_pretax_asset.withdraw(2024, to_withdraw)
         assert net_withdrawn == pytest.approx(127_168, rel=0.001)
+
+    def test_validate_withdrawal_parameters_without_age(self, sample_pretax_asset):
+        sample_pretax_asset.age = None
+        with pytest.raises(ValueError):
+            sample_pretax_asset._validate_withdrawal_parameters()
+
+    def test_validate_withdrawal_parameters_without_state(self, sample_pretax_asset):
+        sample_pretax_asset.state = None
+        with pytest.raises(ValueError):
+            sample_pretax_asset._validate_withdrawal_parameters()
+
+
+class TestPortfolio:
+    def test_rebalancing_taxable_portfolio(self, sample_taxable_portfolio):
+        multipliers = sample_taxable_portfolio.multipliers
+        assert (
+            np.mean(np.diff(np.mean(multipliers, axis=0))) < 0
+        ), "Mean should decrease over time on average"
+        assert (
+            np.mean(np.diff(np.std(multipliers, axis=0))) < 0
+        ), "Stdev should decrease over time on average"
+
+    def test_rebalancing_pretax_portfolio(self, sample_pretax_portfolio):
+        multipliers = sample_pretax_portfolio.multipliers
+        assert (
+            np.mean(np.diff(np.mean(multipliers, axis=0))) < 0
+        ), "Mean should decrease over time on average"
+        assert (
+            np.mean(np.diff(np.std(multipliers, axis=0))) < 0
+        ), "Stdev should decrease over time on average"
+
+    def test_plot_pretax_portfolio(self, sample_pretax_portfolio):
+        ax = sample_pretax_portfolio.plot()
+        assert len(ax.get_lines()[0].get_xdata()) == sample_pretax_portfolio.duration
+        # Close figure to avoid messing with other plot tests
+        plt.close(ax.figure)
+
+    def test_plot_pretax_portfolio_split(self, sample_pretax_portfolio):
+        ax = sample_pretax_portfolio.plot(split=True)
+        assert len(ax.get_lines()[0].get_xdata()) == sample_pretax_portfolio.duration
+        assert len(ax.get_lines()) == 2
+        # Close figure to avoid messing with other plot tests
+        plt.close(ax.figure)
+
+    def test_plot_taxable_portfolio(self, sample_taxable_portfolio):
+        ax = sample_taxable_portfolio.plot()
+        assert len(ax.get_lines()[0].get_xdata()) == sample_taxable_portfolio.duration
+        # Close figure to avoid messing with other plot tests
+        plt.close(ax.figure)
+
+    def test_plot_taxable_portfolio_split(self, sample_taxable_portfolio):
+        ax = sample_taxable_portfolio.plot(split=True)
+        assert len(ax.get_lines()[0].get_xdata()) == sample_taxable_portfolio.duration
+        assert len(ax.get_lines()) == 2
+        # Close figure to avoid messing with other plot tests
+        plt.close(ax.figure)

@@ -126,6 +126,7 @@ class InOrOutPerYear:
         duration: Optional[int] = None,
         ax: Optional[plt.Axes] = None,
         array: np.ndarray = None,
+        label: Optional[str] = None,
         **kwargs,
     ) -> plt.Axes:
         """
@@ -142,7 +143,7 @@ class InOrOutPerYear:
         upper_bound = np.percentile(array[:, :plot_duration], 95, axis=0)
 
         # Plot median value
-        ax.plot(years, median_values, label=self.name, **kwargs)
+        ax.plot(years, median_values, label=label or self.name, **kwargs)
 
         # Plot confidence interval
         ax.fill_between(years, lower_bound, upper_bound, alpha=0.2)
@@ -155,6 +156,12 @@ class InOrOutPerYear:
         ax.tick_params(axis="x", rotation=60)
         ax.legend()
         ax.grid(True, alpha=0.3)
+        # Assume that the values are in dollars if they are greater than 1e3
+        # And format y-axis labels to use thousands (k) or millions (M) notation
+        if np.any(array >= 1e3):
+            ax.yaxis.set_major_formatter(
+                plt.FuncFormatter(lambda x, p: f"${x/1e6:.1f}M" if x >= 1e6 else f"${x/1e3:.0f}K")
+            )
         return ax
 
     def plot(
@@ -165,10 +172,6 @@ class InOrOutPerYear:
         """
         ax = ax or plt.gca()
         self._plot(duration, ax, self.base_values, **kwargs)
-        # Format y-axis labels to use thousands (k) or millions (M) notation
-        ax.yaxis.set_major_formatter(
-            plt.FuncFormatter(lambda x, p: f"${x/1e6:.1f}M" if x >= 1e6 else f"${x/1e3:.0f}K")
-        )
         return ax
 
     def plot_multipliers(

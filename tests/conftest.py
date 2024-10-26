@@ -1,8 +1,15 @@
 import pytest
 
-from spear.assets import Asset, PretaxAsset, TaxableAsset
+from spear.assets import (
+    Asset,
+    PretaxAsset,
+    PretaxPortfolio,
+    TaxableAsset,
+    TaxablePortfolio,
+)
 from spear.events import Action, Event
 from spear.flows import Expense, InOrOutPerYear, TaxableIncome
+from spear.growth import GrowthType
 from spear.model import FinancialModel
 
 
@@ -77,6 +84,16 @@ def sample_stock_with_cap_deposit():
 
 
 @pytest.fixture
+def sample_stock_with_growth_type():
+    return Asset(
+        name="Test Stock with Growth Type",
+        initial_value=1_000,
+        start_year=2024,
+        growth_type=GrowthType.STOCKS,
+    )
+
+
+@pytest.fixture
 def sample_taxable_stock():
     return TaxableAsset(
         name="Test Stock for Capital Gains",
@@ -113,12 +130,36 @@ def sample_pretax_asset():
 
 
 @pytest.fixture
+def sample_taxable_portfolio():
+    return TaxablePortfolio(
+        name="Test Taxable Portfolio",
+        initial_value=1_000,
+        start_year=2024,
+        age=30,
+        number_of_simulations=1_000,
+    )
+
+
+@pytest.fixture
+def sample_pretax_portfolio():
+    return PretaxPortfolio(
+        name="Test Pretax Portfolio",
+        initial_value=1_000,
+        start_year=2024,
+        age=30,
+        state="MA",
+        number_of_simulations=1_000,
+    )
+
+
+@pytest.fixture
 def basic_model(sample_revenue, sample_expense, sample_stock, sample_bond, sample_cash):
     return FinancialModel(
         revenues=[sample_revenue],
         expenses=[sample_expense],
         assets=[sample_cash, sample_bond, sample_stock],
         duration=10,
+        age=30,
     )
 
 
@@ -131,6 +172,7 @@ def model_with_simulations(
         expenses=[sample_expense],
         assets=[sample_cash, sample_bond, sample_stock, sample_pretax_asset],
         duration=10,
+        age=30,
         number_of_simulations=1_000,
     )
 
@@ -204,3 +246,16 @@ def model_with_events(
         sample_event_buy_house,
     ]
     return model
+
+
+@pytest.fixture
+def model_with_portfolios(
+    sample_revenue, sample_expense, sample_taxable_portfolio, sample_pretax_portfolio
+):
+    return FinancialModel(
+        revenues=[sample_revenue],
+        expenses=[sample_expense],
+        assets=[sample_taxable_portfolio, sample_pretax_portfolio],
+        duration=10,
+        age=30,
+    )
