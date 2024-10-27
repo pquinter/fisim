@@ -38,7 +38,7 @@ Assets can be specified with a fixed growth rate, and a cap on the total value, 
 
 ```python
 from spear.assets import Asset, TaxableAsset
-# Assets
+
 cash = Asset(name="Cash", initial_value=50_000, growth_rate=0.01, cap_value=50_000)
 ```
 
