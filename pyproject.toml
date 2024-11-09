@@ -5,7 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "fisim"
 version = "0.1.0"
-description = "Financial planning model"
+authors = [
+    { name = "pquinter" },
+]
+description = "Simulate personal finances over time"
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
@@ -27,7 +30,7 @@ dev = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/pquinter/financial-planning"
+"Homepage" = "https://github.com/pquinter/fisim"
 
 [tool.setuptools]
 packages = ["fisim"]
