@@ -5,9 +5,9 @@ Cash flow classes for financial planning model
 
 import numpy as np
 
-from spear.base import InOrOutPerYear
-from spear.constants import STATE_TAX_RATES
-from spear.taxes import calculate_total_tax
+from fisim.base import InOrOutPerYear
+from fisim.constants import STATE_TAX_RATES
+from fisim.taxes import calculate_total_tax
 
 
 class Expense(InOrOutPerYear):

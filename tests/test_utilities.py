@@ -1,6 +1,6 @@
 import pytest
 
-from spear.taxes import calculate_tax_liability, calculate_total_tax
+from fisim.taxes import calculate_tax_liability, calculate_total_tax
 
 
 class TestTaxes:

@@ -2,7 +2,7 @@ from typing import Optional, Union
 
 import numpy as np
 
-from spear.constants import (
+from fisim.constants import (
     FEDERAL_TAX_RATES,
     LONG_TERM_CAPITAL_GAINS_TAX_BRACKETS,
     STATE_TAX_RATES,

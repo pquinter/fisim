@@ -1,16 +1,16 @@
 import pytest
 
-from spear.assets import (
+from fisim.assets import (
     Asset,
     PretaxAsset,
     PretaxPortfolio,
     TaxableAsset,
     TaxablePortfolio,
 )
-from spear.events import Action, Event
-from spear.flows import Expense, InOrOutPerYear, TaxableIncome
-from spear.growth import GrowthType
-from spear.model import FinancialModel
+from fisim.events import Action, Event
+from fisim.flows import Expense, InOrOutPerYear, TaxableIncome
+from fisim.growth import GrowthType
+from fisim.model import FinancialModel
 
 
 @pytest.fixture

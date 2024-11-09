@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import pytest
 
-from spear.base import InOrOutPerYear
+from fisim.base import InOrOutPerYear
 
 
 class TestInOrOutPerYear:

@@ -1,7 +1,7 @@
 import pytest
 
-from spear.flows import TaxableIncome
-from spear.taxes import calculate_total_tax
+from fisim.flows import TaxableIncome
+from fisim.taxes import calculate_total_tax
 
 
 class TestExpense:

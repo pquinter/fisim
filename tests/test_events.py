@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from spear.events import Action
+from fisim.events import Action
 
 
 class TestAction:

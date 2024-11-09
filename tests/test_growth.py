@@ -1,6 +1,6 @@
 import numpy as np
 
-from spear.growth import (
+from fisim.growth import (
     GrowthType,
     get_rebalancing_stock_allocations,
     sample_from_historical_growth_rates,
