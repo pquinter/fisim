@@ -6,14 +6,14 @@ Financial Simulator (`fisim`) is a framework to explicitly simulate personal fin
 
 Simulations are based on US tax law, and calculations are performed on a year-by-year basis.
 
+keywords: financial planning, early retirement, life planning
+
 ## Installation
 
-Clone the repository and install with pip:
+Install with pip:
 
 ```bash
-git clone https://github.com/pquinter/financial-planning.git
-cd financial-planning
-pip install -e .
+pip install fisim
 ```
 
 ## Usage
