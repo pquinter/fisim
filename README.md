@@ -2,7 +2,7 @@
 
 # fisim
 
-Financial Simulator (`fisim`) is a framework to explicitly simulate personal finances over time, including revenues, expenses, assets, and events (e.g. buying a house, or quitting your job), automatically accounting for US taxes, inflation, and asset growth.
+Financial Simulator (`fisim`) is a framework to explicitly simulate personal finances over time, including revenues, expenses, assets, and events (e.g. buying a house, or quitting your job), automatically accounting for taxes, inflation, and asset growth.
 
 Simulations are based on US tax law, and calculations are performed on a year-by-year basis.
 
