@@ -34,15 +34,11 @@ cost_of_living = Expense(name="Cost of Living", initial_value=20_000, inflation_
 
 ### Specify assets
 
-Assets can be specified with a fixed growth rate, and a cap on the total value, after which surplus money goes into assets without a cap; you can also specify a `cap_deposit` to limit how much money goes into a particular asset each year.
-
 ```python
 from spear.assets import Asset
 
-cash = Asset(name="Cash", initial_value=50_000, growth_rate=0.01, cap_value=50_000)
+cash = Asset(name="Cash", initial_value=5_000, growth_rate=0.01, cap_value=10_000)
 ```
-
-Assets with growth type will grow with a rate sampled from historical data; the allocations must collectively equal 1, and weigh deposits into each asset.
 
 ```python
 from spear.assets import PretaxAsset, TaxableAsset
@@ -50,14 +46,14 @@ from spear.growth import GrowthType
 
 bonds = TaxableAsset(
     name="Bonds",
-    initial_value=50_000,
+    initial_value=10_000,
     allocation=0.1,
     growth_type=GrowthType.BONDS,
     seed=42
 )
 stocks = TaxableAsset(
     name="Stocks",
-    initial_value=380_000,
+    initial_value=20_000,
     allocation=0.9,
     growth_type=GrowthType.STOCKS,
     seed=42
@@ -102,10 +98,10 @@ In each year, the order of operations is:
 
 1. Balance cash flow.
    - Negative cash flow acumulates as debt.
-   - Positive cash flow is distributed among assets.
+   - Positive cash flow is available to be distributed among assets.
 2. Invest in pre-tax assets.
 3. Tax revenues.
-4. Distribute cash flow among assets.
+4. Distribute cash flow, by investing in assets or paying off debt.
 5. Grow assets.
 6. Add inflation to expenses.
 
