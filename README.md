@@ -18,7 +18,7 @@ pip install xfisi
 
 ## Usage
 
-Content below comes from the [walkthrough notebook](notebooks/walkthrough.ipynb).
+Content below comes from the [walkthrough notebook](https://github.com/pquinter/fisim/blob/public/notebooks/walkthrough.ipynb).
 
 ### Specify revenues and expenses
 
