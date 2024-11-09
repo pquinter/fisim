@@ -41,6 +41,6 @@ class EarlyWithdrawal(Enum):
     PENALTY = 0.10
 
 
-HISTORIC_GROWTH_RATES_PATH = resources.files("xfisi.data").joinpath(
+HISTORIC_GROWTH_RATES_PATH = resources.files("fisi.data").joinpath(
     "historic_annual_growth_rates.csv"
 )

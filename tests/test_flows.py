@@ -1,7 +1,7 @@
 import pytest
 
-from xfisi.flows import TaxableIncome
-from xfisi.taxes import calculate_total_tax
+from fisi.flows import TaxableIncome
+from fisi.taxes import calculate_total_tax
 
 
 class TestExpense:

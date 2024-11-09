@@ -1,16 +1,16 @@
 import pytest
 
-from xfisi.assets import (
+from fisi.assets import (
     Asset,
     PretaxAsset,
     PretaxPortfolio,
     TaxableAsset,
     TaxablePortfolio,
 )
-from xfisi.events import Action, Event
-from xfisi.flows import Expense, InOrOutPerYear, TaxableIncome
-from xfisi.growth import GrowthType
-from xfisi.model import FinancialModel
+from fisi.events import Action, Event
+from fisi.flows import Expense, InOrOutPerYear, TaxableIncome
+from fisi.growth import GrowthType
+from fisi.model import FinancialModel
 
 
 @pytest.fixture

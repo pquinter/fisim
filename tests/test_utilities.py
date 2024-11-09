@@ -1,6 +1,6 @@
 import pytest
 
-from xfisi.taxes import calculate_tax_liability, calculate_total_tax
+from fisi.taxes import calculate_tax_liability, calculate_total_tax
 
 
 class TestTaxes:

@@ -5,9 +5,9 @@ Cash flow classes for financial planning model
 
 import numpy as np
 
-from xfisi.base import InOrOutPerYear
-from xfisi.constants import STATE_TAX_RATES
-from xfisi.taxes import calculate_total_tax
+from fisi.base import InOrOutPerYear
+from fisi.constants import STATE_TAX_RATES
+from fisi.taxes import calculate_total_tax
 
 
 class Expense(InOrOutPerYear):

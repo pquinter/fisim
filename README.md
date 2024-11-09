@@ -1,8 +1,8 @@
 [![Tests](https://github.com/pquinter/financial-planning/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/pquinter/financial-planning/actions/workflows/ci.yml)
 
-# xfisi
+# fisi
 
-Financial Simulator (`xfisi`) is a framework to explicitly simulate personal finances over time, including revenues, expenses, assets, and events (e.g. buying a house, or quitting your job), automatically accounting for taxes, inflation, and asset growth.
+Financial Simulator (`fisi`) is a framework to explicitly simulate personal finances over time, including revenues, expenses, assets, and events (e.g. buying a house, or quitting your job), automatically accounting for taxes, inflation, and asset growth.
 
 Simulations are based on US tax law, and calculations are performed on a year-by-year basis.
 
@@ -13,7 +13,7 @@ keywords: financial planning, early retirement, life planning
 Install with pip:
 
 ```bash
-pip install xfisi
+pip install fisi
 ```
 
 ## Usage
@@ -26,7 +26,7 @@ Revenues have a fixed value, and expenses grow with a fixed inflation rate.
 The state is used to calculate taxes.
 
 ```python
-from xfisi.flows import Expense, TaxableIncome
+from fisi.flows import Expense, TaxableIncome
 
 salary = TaxableIncome(name="Salary", initial_value=70_000, state="MA")
 
@@ -37,14 +37,14 @@ cost_of_living = Expense(name="Cost of Living", initial_value=20_000, inflation_
 ### Specify assets
 
 ```python
-from xfisi.assets import Asset
+from fisi.assets import Asset
 
 cash = Asset(name="Cash", initial_value=5_000, growth_rate=0.01, cap_value=10_000)
 ```
 
 ```python
-from xfisi.assets import PretaxAsset, TaxableAsset
-from xfisi.growth import GrowthType
+from fisi.assets import PretaxAsset, TaxableAsset
+from fisi.growth import GrowthType
 
 bonds = TaxableAsset(
     name="Bonds",
@@ -68,7 +68,7 @@ _401k = PretaxAsset(
 )
 ```
 
-Alternatively, see `TaxablePortfolio` or `PretaxPortfolio` in `xfisi.assets`, to simulate a mix of stocks and bonds with automatic rebalancing.
+Alternatively, see `TaxablePortfolio` or `PretaxPortfolio` in `fisi.assets`, to simulate a mix of stocks and bonds with automatic rebalancing.
 
 ### Specify events acting on any of your revenues, expenses, or assets
 
@@ -108,7 +108,7 @@ In each year, the order of operations is:
 6. Add inflation to expenses.
 
 ```python
-from xfisi.model import FinancialModel
+from fisi.model import FinancialModel
 
 model = FinancialModel(
     revenues=[salary],
