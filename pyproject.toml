@@ -3,7 +3,7 @@ requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fisim"
+name = "xfisi"
 version = "0.1.0"
 authors = [
     { name = "pquinter" },
@@ -33,7 +33,7 @@ dev = [
 "Homepage" = "https://github.com/pquinter/fisim"
 
 [tool.setuptools]
-packages = ["fisim"]
+packages = ["xfisi"]
 
 [tool.ruff]
 select = ["E", "F", "I"]
@@ -44,4 +44,4 @@ line-length = 100
 "__init__.py" = ["F401"]
 
 [tool.ruff.isort]
-known-first-party = ["fisim"]
+known-first-party = ["xfisi"]

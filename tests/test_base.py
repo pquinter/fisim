@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import pytest
 
-from fisim.base import InOrOutPerYear
+from xfisi.base import InOrOutPerYear
 
 
 class TestInOrOutPerYear:

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from fisim.events import Action
+from xfisi.events import Action
 
 
 class TestAction:

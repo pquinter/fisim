@@ -1,6 +1,6 @@
 import numpy as np
 
-from fisim.growth import (
+from xfisi.growth import (
     GrowthType,
     get_rebalancing_stock_allocations,
     sample_from_historical_growth_rates,

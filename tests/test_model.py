@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from fisim.model import FinancialModel
-from fisim.taxes import calculate_total_tax
+from xfisi.model import FinancialModel
+from xfisi.taxes import calculate_total_tax
 
 
 class TestFinancialModelBasics:
