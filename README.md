@@ -4,6 +4,8 @@
 
 A framework to explicitly simulate personal finances over time, including revenues, expenses, assets, and events (e.g. buying a house, or quitting your job), automatically accounting for US taxes, inflation, and asset growth.
 
+Simulations are based on US tax law, and calculations are performed on a year-by-year basis.
+
 ## Installation
 
 Clone the repository and install with pip:
@@ -16,7 +18,7 @@ pip install -e .
 
 ## Usage
 
-Simulations are based on US tax law, and calculations are performed on a year-by-year basis.
+Content below comes from the [walkthrough notebook](notebooks/walkthrough.ipynb).
 
 ### Specify revenues and expenses
 
