@@ -1,11 +1,8 @@
 [![Tests](https://github.com/pquinter/financial-planning/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/pquinter/financial-planning/actions/workflows/ci.yml)
 
-# Personal finance simulator
+# finance-simulator
 
-This package enables you to explicitly simulate your finances over time, including revenues, expenses, assets, and events, automatically accounting for US taxes, inflation, and asset growth.
-
-You can use events to simulate the impact of major life changes, such as buying a house, or quitting your job.
-The framework is flexible and extensible, and you can add your own behavior with custom subclasses.
+A framework to explicitly simulate personal finances over time, including revenues, expenses, assets, and events (e.g. buying a house, or quitting your job), automatically accounting for US taxes, inflation, and asset growth.
 
 ## Installation
 
